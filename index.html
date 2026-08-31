@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Sudoku</h1>
+
+        <div class="controls">
+            <button id="btn-easy" class="diff-btn">Easy</button>
+            <button id="btn-medium" class="diff-btn">Medium</button>
+            <button id="btn-hard" class="diff-btn">Hard</button>
+        </div>
+
+        <div id="board" class="board"></div>
+
+        <div class="number-pad">
+            <button class="num-btn" data-num="1">1</button>
+            <button class="num-btn" data-num="2">2</button>
+            <button class="num-btn" data-num="3">3</button>
+            <button class="num-btn" data-num="4">4</button>
+            <button class="num-btn" data-num="5">5</button>
+            <button class="num-btn" data-num="6">6</button>
+            <button class="num-btn" data-num="7">7</button>
+            <button class="num-btn" data-num="8">8</button>
+            <button class="num-btn" data-num="9">9</button>
+        </div>
+
+        <div class="action-buttons">
+            <button id="btn-undo" class="action-btn">Undo</button>
+            <button id="btn-clear" class="action-btn">Clear</button>
+        </div>
+
+        <div id="win-banner" class="win-banner hidden">
+            <p>🎉 You solved it!</p>
+            <button id="btn-new-game" class="action-btn">New Game</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
