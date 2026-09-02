@@ -85,7 +85,10 @@ function countSolutions(board, limit=2):
 
 | File | Changes |
 |------|---------|
-| `script.js` | Add generator functions; update `newGame()` to use generated puzzles; keep `PUZZLES` as a fallback |
+| `script.js` | Import generator from `generator.js`; update `newGame()` to use generated puzzles; keep `PUZZLES` as a fallback |
+| `generator.js` | **New file** — pure logic module containing all generator functions (no DOM dependencies) |
+| `test/generator.test.js` | **New file** — test cases for all generator functions using `node:test` and `node:assert` |
+| `package.json` | **New file** — minimal, just `"test": "node --test test/"` script entry |
 
 ### New Functions in `script.js`
 
@@ -118,18 +121,84 @@ function countSolutions(board, limit=2):
 
 ## Testing Plan
 
-Since there's no test framework, testing will be manual:
+### Test Framework Setup
 
-1. **Solubility** — Generate 10 puzzles per difficulty; manually verify each is solvable.
-2. **Uniqueness** — For each generated puzzle, run `countSolutions` and confirm it returns 1.
-3. **Difficulty feel** — Play through generated puzzles at each level; confirm Easy feels easy, Hard feels hard.
-4. **Performance** — Time `generatePuzzle()` for each difficulty; confirm it completes in under 500ms.
-5. **Integration** — Verify the full game flow: select difficulty → new game → play → win → new game.
+Since the project has no existing test framework, we'll add a lightweight setup:
+
+- **Test runner** — Use Node.js's built-in `node:test` and `node:assert` (no external dependencies, consistent with the vanilla JS philosophy).
+- **Test file** — `test/generator.test.js` — tests for the puzzle generation functions.
+- **Script entry** — Add `"test": "node --test test/"` to a minimal `package.json` so tests run with `npm test`.
+- **Module export** — The generator functions in `script.js` need to be importable. Since `script.js` currently runs in the browser with top-level DOM code, we'll either:
+  - **Option A (preferred):** Extract generator functions into a separate `generator.js` module that both `script.js` and the test file import. This keeps browser code clean and testable.
+  - **Option B:** Add a `module.exports` guard at the bottom of `script.js` (e.g., `if (typeof module !== 'undefined') module.exports = { ... }`). Less clean but avoids restructuring.
+
+  **Recommendation:** Option A — extract to `generator.js`. This is a natural separation of concerns (pure logic vs. DOM/UI code) and makes testing straightforward.
+
+### Test Cases for Random Puzzle Generation
+
+#### `generateFullSolution()`
+
+| # | Test | Expected Result |
+|---|------|-----------------|
+| 1 | Returns an array of 81 integers | Length === 81 |
+| 2 | All values are 1–9 (no zeros) | Every element in range [1, 9] |
+| 3 | Each row contains digits 1–9 exactly once | All 9 rows are valid |
+| 4 | Each column contains digits 1–9 exactly once | All 9 columns are valid |
+| 5 | Each 3×3 box contains digits 1–9 exactly once | All 9 boxes are valid |
+| 6 | Two consecutive calls produce different boards | Not deep-equal (randomness check) |
+
+#### `countSolutions(board, limit)`
+
+| # | Test | Expected Result |
+|---|------|-----------------|
+| 7 | Empty board (all zeros) → `countSolutions(board, 2)` | Returns 2 (many solutions, early-exit) |
+| 8 | Fully solved board → `countSolutions(board, 2)` | Returns 1 (exactly one solution) |
+| 9 | Board with a conflict (duplicate in a row) → `countSolutions(board, 2)` | Returns 0 (no valid solutions) |
+
+#### `createPuzzle(solution, targetClues)`
+
+| # | Test | Expected Result |
+|---|------|-----------------|
+| 10 | Returned puzzle has exactly `targetClues` non-zero cells | Count of non-zero === targetClues |
+| 11 | All non-zero cells match the original solution | Puzzle is a subset of the solution |
+| 12 | Puzzle has a unique solution | `countSolutions(puzzle, 2)` === 1 |
+
+#### `generatePuzzle(difficulty)`
+
+| # | Test | Expected Result |
+|---|------|-----------------|
+| 13 | Returns an array of 81 integers | Length === 81 |
+| 14 | Clue count is within the expected range for the difficulty | Easy: 40–45, Medium: 32–36, Hard: 25–30 |
+| 15 | Puzzle has a unique solution | `countSolutions(puzzle, 2)` === 1 |
+| 16 | Puzzle is solvable (solution matches) | Solver can complete it |
+| 17 | Two consecutive calls produce different puzzles | Not deep-equal (randomness check) |
+| 18 | Works for all three difficulties | No errors for 'easy', 'medium', 'hard' |
+
+#### Performance
+
+| # | Test | Expected Result |
+|---|------|-----------------|
+| 19 | `generatePuzzle('easy')` completes in < 500ms | `performance.now()` delta < 500 |
+| 20 | `generatePuzzle('hard')` completes in < 1000ms | `performance.now()` delta < 1000 |
+
+### Manual / Integration Testing
+
+Since the game logic interacts with the DOM, integration tests remain manual for now:
+
+1. **Difficulty feel** — Play through generated puzzles at each level; confirm Easy feels easy, Hard feels hard.
+2. **Full game flow** — Select difficulty → new game → play → win → new game; verify no regressions.
+3. **Fallback** — If generation fails, confirm the game falls back to a static puzzle without crashing.
+
+### Testing Scope Note
+
+> **This testing plan covers only the random puzzle generation feature.**
+> A comprehensive test suite for the existing Sudoku game (rendering, input handling, conflict detection, undo, win detection, etc.) is **out of scope** for this branch and will be reviewed and added as a separate effort after this feature is merged.
 
 ---
 
 ## Out of Scope (Future Enhancements)
 
+- **Test suite for existing Sudoku game** — rendering, input handling, conflict detection, undo, win detection. Will be reviewed and added as a separate effort after this feature merges.
 - Web Worker for non-blocking generation
 - Difficulty based on solving techniques required (not just clue count)
 - Puzzle validation UI (show user if puzzle has unique solution)
@@ -146,3 +215,7 @@ Since there's no test framework, testing will be manual:
 - [ ] No breaking changes to existing game flow
 - [ ] Performance is acceptable for a browser game
 - [ ] Code follows existing style (vanilla JS, no dependencies)
+- [ ] Generator functions are extracted into a testable module (`generator.js`)
+- [ ] Test framework setup (`node:test`) is minimal and dependency-free
+- [ ] All 20 test cases pass for the generator functions
+- [ ] Manual integration testing confirms no regressions in game flow
