@@ -274,10 +274,21 @@ function checkWin() {
 // ---- 3j. New Game -------------------------------------------
 function newGame(difficulty) {
     currentDifficulty = difficulty;
-    const puzzles = PUZZLES[difficulty];
-    const randomPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
 
-    originalPuzzle = parsePuzzle(randomPuzzle);
+    // Try to generate a random puzzle; fall back to static puzzles on failure
+    try {
+        if (typeof generatePuzzle === 'function') {
+            originalPuzzle = generatePuzzle(difficulty);
+        } else {
+            throw new Error('Generator not available');
+        }
+    } catch (err) {
+        console.warn('Puzzle generation failed, falling back to static puzzles:', err);
+        const puzzles = PUZZLES[difficulty];
+        const randomPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
+        originalPuzzle = parsePuzzle(randomPuzzle);
+    }
+
     board = [...originalPuzzle];
     moveHistory = [];
     selectedCell = null;
