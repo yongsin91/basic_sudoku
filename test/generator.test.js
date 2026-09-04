@@ -10,6 +10,7 @@ const assert = require('node:assert');
 const {
     generateFullSolution,
     countSolutions,
+    solveBoard,
     createPuzzle,
     getTargetClueCount,
     generatePuzzle,
@@ -146,6 +147,97 @@ test('9. board with a conflict returns 0', () => {
 });
 
 // ============================================================
+//  solveBoard(board)
+// ============================================================
+section('solveBoard');
+
+test('21. solves a valid puzzle and returns 81-cell solution', () => {
+    const puzzle = generatePuzzle('easy');
+    const solution = solveBoard(puzzle);
+    assert.ok(solution);
+    assert.strictEqual(solution.length, 81);
+    assert.ok(solution.every(v => v >= 1 && v <= 9));
+});
+
+test('22. solution satisfies all row constraints', () => {
+    const puzzle = generatePuzzle('medium');
+    const solution = solveBoard(puzzle);
+    for (let row = 0; row < 9; row++) {
+        assert.ok(isRowValid(solution, row), `Row ${row} invalid`);
+    }
+});
+
+test('23. solution satisfies all column constraints', () => {
+    const puzzle = generatePuzzle('hard');
+    const solution = solveBoard(puzzle);
+    for (let col = 0; col < 9; col++) {
+        assert.ok(isColValid(solution, col), `Column ${col} invalid`);
+    }
+});
+
+test('24. solution satisfies all 3x3 box constraints', () => {
+    const puzzle = generatePuzzle('easy');
+    const solution = solveBoard(puzzle);
+    for (let br = 0; br < 9; br += 3) {
+        for (let bc = 0; bc < 9; bc += 3) {
+            assert.ok(isBoxValid(solution, br, bc), `Box (${br},${bc}) invalid`);
+        }
+    }
+});
+
+test('25. solution is consistent with puzzle clues', () => {
+    const puzzle = generatePuzzle('medium');
+    const solution = solveBoard(puzzle);
+    for (let i = 0; i < 81; i++) {
+        if (puzzle[i] !== 0) {
+            assert.strictEqual(solution[i], puzzle[i], `Cell ${i} changed`);
+        }
+    }
+});
+
+test('26. returns null for board with conflicting values', () => {
+    const puzzle = generatePuzzle('easy');
+    // Create a conflict: set two cells in the same row to the same value
+    const bad = [...puzzle];
+    const firstEmpty = bad.indexOf(0);
+    const nextEmpty = bad.indexOf(0, firstEmpty + 1);
+    // Make sure they're in the same row (indices 0-8)
+    bad[0] = 5;
+    bad[1] = 5; // duplicate in row 0
+    assert.strictEqual(solveBoard(bad), null);
+});
+
+test('27. returns the board as-is when already complete', () => {
+    const solution = generateFullSolution();
+    const solved = solveBoard(solution);
+    assert.deepStrictEqual(solved, solution);
+});
+
+test('28. solves partially-filled board correctly', () => {
+    const puzzle = generatePuzzle('easy');
+    const fullSolution = solveBoard(puzzle);
+    // Fill in 10 cells with correct values
+    const partial = [...puzzle];
+    let filled = 0;
+    for (let i = 0; i < 81 && filled < 10; i++) {
+        if (partial[i] === 0) {
+            partial[i] = fullSolution[i];
+            filled++;
+        }
+    }
+    const solved = solveBoard(partial);
+    assert.deepStrictEqual(solved, fullSolution);
+});
+
+test('29. solveBoard completes in < 100ms', () => {
+    const puzzle = generatePuzzle('hard');
+    const start = performance.now();
+    solveBoard(puzzle);
+    const elapsed = performance.now() - start;
+    assert.ok(elapsed < 100, `solveBoard took ${elapsed.toFixed(0)}ms`);
+});
+
+// ============================================================
 //  createPuzzle(solution, targetClues)
 // ============================================================
 section('createPuzzle');
@@ -237,7 +329,7 @@ test('19. generatePuzzle("easy") completes in < 500ms', () => {
     assert.ok(elapsed < 500, `Easy took ${elapsed.toFixed(0)}ms`);
 });
 
-test('20. generatePuzzle("hard") completes in < 1000ms', () => {
+test('30. generatePuzzle("hard") completes in < 1000ms', () => {
     const start = performance.now();
     generatePuzzle('hard');
     const elapsed = performance.now() - start;
