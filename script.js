@@ -353,6 +353,7 @@ const winBanner = document.getElementById('win-banner');
 function checkWin() {
     if (isBoardComplete()) {
         winBanner.classList.remove('hidden');
+        clearSave();
     } else {
         winBanner.classList.add('hidden');
     }
