@@ -19,6 +19,7 @@
         <div class="status-bar">
             <span id="timer" class="timer">00:00</span>
             <span id="mistakes" class="mistakes">Mistakes: 0</span>
+            <span id="hints" class="hints">Hints: 0</span>
         </div>
 
         <div id="board" class="board"></div>
@@ -39,7 +40,10 @@
             <button id="btn-undo" class="action-btn">Undo</button>
             <button id="btn-clear" class="action-btn">Clear</button>
             <button id="btn-pencil" class="action-btn pencil-btn">🖊️ Pen</button>
+            <button id="btn-hint" class="action-btn hint-btn">💡 Hint</button>
         </div>
+
+        <div id="hint-message" class="hint-message hidden">Fix conflicts first</div>
 
         <div id="win-banner" class="win-banner hidden">
             <p>🎉 You solved it!</p>
