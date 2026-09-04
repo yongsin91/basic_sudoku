@@ -482,8 +482,7 @@ const SAVE_KEY = 'sudoku-save';
  * Silently fails if localStorage is unavailable (e.g. private mode).
  */
 function saveGame() {
-    try {
-        if (typeof Storage === 'undefined') return;
+    withLocalStorage(() => {
         const state = {
             originalPuzzle,
             board,
@@ -496,9 +495,7 @@ function saveGame() {
             mistakeCount,
         };
         localStorage.setItem(SAVE_KEY, JSON.stringify(serializeState(state)));
-    } catch (e) {
-        // Quota exceeded, disabled storage, etc. — silently ignore.
-    }
+    }, undefined);
 }
 
 /**
@@ -507,8 +504,7 @@ function saveGame() {
  * Returns true if a save was loaded, false otherwise.
  */
 function loadGame() {
-    try {
-        if (typeof Storage === 'undefined') return false;
+    return withLocalStorage(() => {
         const raw = localStorage.getItem(SAVE_KEY);
         if (!raw) return false;
         const data = JSON.parse(raw);
@@ -540,10 +536,12 @@ function loadGame() {
         const diffBtn = document.getElementById(`btn-${currentDifficulty}`);
         if (diffBtn) diffBtn.classList.add('active');
 
+        // Check if the restored game is already won (shows win banner,
+        // computes score, clears save — per PLAN-save-load.md edge cases)
+        checkWin();
+
         return true;
-    } catch (e) {
-        return false;
-    }
+    }, false);
 }
 
 /**
@@ -551,12 +549,9 @@ function loadGame() {
  * Called when a puzzle is solved or a brand-new game is started.
  */
 function clearSave() {
-    try {
-        if (typeof Storage === 'undefined') return;
+    withLocalStorage(() => {
         localStorage.removeItem(SAVE_KEY);
-    } catch (e) {
-        // Silently ignore.
-    }
+    }, undefined);
 }
 
 // ---- Start --------------------------------------------------
@@ -564,6 +559,9 @@ if (!loadGame()) {
     newGame('easy');
 } else {
     renderBoard();
-    resumeTimer();
-    checkWin();
+    // Only resume the timer if the game isn't already solved
+    // (checkWin inside loadGame handles the won case)
+    if (!isBoardComplete()) {
+        resumeTimer();
+    }
 }

@@ -71,14 +71,11 @@ function formatTime(seconds) {
  * or {} if none exist or storage is unavailable.
  */
 function getBestScores() {
-    try {
-        if (typeof Storage === 'undefined') return {};
+    return withLocalStorage(() => {
         const raw = localStorage.getItem(BEST_SCORES_KEY);
         if (!raw) return {};
         return JSON.parse(raw);
-    } catch (e) {
-        return {};
-    }
+    }, {});
 }
 
 /**
@@ -90,18 +87,15 @@ function getBestScores() {
  * @returns {boolean} true if a new best was saved, false otherwise
  */
 function saveBestScore(difficulty, score) {
-    try {
-        if (typeof Storage === 'undefined') return false;
-        const scores = getBestScores();
-        if (!scores[difficulty] || score > scores[difficulty]) {
-            scores[difficulty] = score;
+    const scores = getBestScores();
+    if (!scores[difficulty] || score > scores[difficulty]) {
+        scores[difficulty] = score;
+        return withLocalStorage(() => {
             localStorage.setItem(BEST_SCORES_KEY, JSON.stringify(scores));
             return true;
-        }
-        return false;
-    } catch (e) {
-        return false;
+        }, false);
     }
+    return false;
 }
 
 // ---- Exports ------------------------------------------------
