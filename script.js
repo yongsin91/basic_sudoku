@@ -181,6 +181,7 @@ function placeNumber(num) {
     board[idx] = num;
     renderBoard();
     checkWin();
+    saveGame();
 }
 
 function togglePencilMark(num) {
@@ -198,6 +199,7 @@ function togglePencilMark(num) {
         pencilMarks[idx].add(num);
     }
     renderBoard();
+    saveGame();
 }
 
 function clearPencilMarksFromPeers(row, col, num) {
@@ -241,6 +243,7 @@ function eraseSelected() {
         if (pencilMarks[idx].size > 0) {
             pencilMarks[idx].clear();
             renderBoard();
+            saveGame();
         }
         return;
     }
@@ -250,6 +253,7 @@ function eraseSelected() {
     moveHistory.push({ row, col, prevValue: board[idx], newValue: 0, pencilSnapshot: {} });
     board[idx] = 0;
     renderBoard();
+    saveGame();
 }
 
 // Keyboard input
@@ -307,6 +311,7 @@ function togglePencilMode() {
         pencilBtn.textContent = '🖊️ Pen';
         pencilBtn.classList.remove('active');
     }
+    saveGame();
 }
 
 pencilBtn.addEventListener('click', togglePencilMode);
@@ -327,6 +332,7 @@ document.getElementById('btn-undo').addEventListener('click', () => {
     }
 
     renderBoard();
+    saveGame();
 });
 
 // ---- 3i. Clear -----------------------------------------------
@@ -338,6 +344,7 @@ document.getElementById('btn-clear').addEventListener('click', () => {
     }
     moveHistory = [];
     renderBoard();
+    saveGame();
 });
 
 // ---- 3j. Win Detection --------------------------------------
@@ -375,6 +382,7 @@ function newGame(difficulty) {
     document.getElementById(`btn-${difficulty}`).classList.add('active');
 
     renderBoard();
+    saveGame();
 }
 
 document.getElementById('btn-easy').addEventListener('click', () => newGame('easy'));
