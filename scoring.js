@@ -29,7 +29,7 @@ const BEST_SCORES_KEY = 'sudoku-best-scores';
  * @param {string} difficulty - 'easy' | 'medium' | 'hard'
  * @param {number} elapsedSeconds - total seconds taken
  * @param {number} mistakeCount - number of conflicting placements
- * @returns {Object} { base, timePenalty, mistakePenalty, final }
+ * @returns {Object} { base, timePenalty, mistakePenalty, final, breakdown }
  */
 function computeScore(difficulty, elapsedSeconds, mistakeCount) {
     const base = DIFFICULTY_BASE[difficulty] || DIFFICULTY_BASE.easy;
@@ -47,8 +47,9 @@ function computeScore(difficulty, elapsedSeconds, mistakeCount) {
 
     const minScore = Math.floor(base * MIN_SCORE_FRACTION);
     const final = Math.max(minScore, base - timePenalty - mistakePenalty);
+    const breakdown = `${base} - ${timePenalty} - ${mistakePenalty} = ${final}`;
 
-    return { base, timePenalty, mistakePenalty, final };
+    return { base, timePenalty, mistakePenalty, final, breakdown };
 }
 
 // ---- Time Formatting ----------------------------------------
@@ -98,6 +99,17 @@ function saveBestScore(difficulty, score) {
     return false;
 }
 
+/**
+ * Read the best score for a single difficulty.
+ *
+ * @param {string} difficulty - 'easy' | 'medium' | 'hard'
+ * @returns {number} best score, or 0 if none exists
+ */
+function getBestScore(difficulty) {
+    const scores = getBestScores();
+    return scores[difficulty] || 0;
+}
+
 // ---- Exports ------------------------------------------------
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -109,6 +121,7 @@ if (typeof module !== 'undefined' && module.exports) {
         computeScore,
         formatTime,
         getBestScores,
+        getBestScore,
         saveBestScore,
     };
 }

@@ -407,8 +407,7 @@ function checkWin() {
         stopTimer();
         const result = computeScore(currentDifficulty, elapsedSeconds, mistakeCount);
         const isNewBest = saveBestScore(currentDifficulty, result.final);
-        const bestScores = getBestScores();
-        const best = bestScores[currentDifficulty] || 0;
+        const best = getBestScore(currentDifficulty);
 
         // Populate win banner
         document.getElementById('win-time').textContent = formatTime(elapsedSeconds);
