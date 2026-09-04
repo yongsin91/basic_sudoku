@@ -398,55 +398,10 @@ document.getElementById('btn-new-game').addEventListener('click', () => newGame(
 
 const SAVE_KEY = 'sudoku-save';
 
-/**
- * Serialize all game state into a plain JSON-safe object.
- * Pure function — no DOM or localStorage access. Testable in Node.
- */
-function serializeState() {
-    return {
-        originalPuzzle: [...originalPuzzle],
-        board: [...board],
-        pencilMarks: pencilMarks.map(s => [...s]),
-        moveHistory: moveHistory.map(m => ({
-            row: m.row,
-            col: m.col,
-            prevValue: m.prevValue,
-            newValue: m.newValue,
-            pencilSnapshot: { ...m.pencilSnapshot },
-        })),
-        currentDifficulty,
-        pencilMode,
-        selectedCell: selectedCell ? { ...selectedCell } : null,
-    };
-}
-
-/**
- * Deserialize a plain object back into live game-state variables.
- * Pure function — restores Sets from arrays but does NOT touch DOM
- * or localStorage. Returns true on success, false on bad data.
- */
-function deserializeState(data) {
-    if (!data || typeof data !== 'object') return false;
-
-    try {
-        originalPuzzle = [...data.originalPuzzle];
-        board = [...data.board];
-        pencilMarks = data.pencilMarks.map(arr => new Set(arr));
-        moveHistory = data.moveHistory.map(m => ({
-            row: m.row,
-            col: m.col,
-            prevValue: m.prevValue,
-            newValue: m.newValue,
-            pencilSnapshot: { ...m.pencilSnapshot },
-        }));
-        currentDifficulty = data.currentDifficulty || 'easy';
-        pencilMode = !!data.pencilMode;
-        selectedCell = data.selectedCell ? { ...data.selectedCell } : null;
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
+// serializeState / deserializeState are imported from serialize.js
+// (loaded via <script> in the browser, or require'd in Node tests).
+// They are pure functions that accept/return a state object, keeping
+// the serialization logic testable without DOM access.
 
 /**
  * Save the current game state to localStorage.
@@ -455,7 +410,16 @@ function deserializeState(data) {
 function saveGame() {
     try {
         if (typeof Storage === 'undefined') return;
-        localStorage.setItem(SAVE_KEY, JSON.stringify(serializeState()));
+        const state = {
+            originalPuzzle,
+            board,
+            pencilMarks,
+            moveHistory,
+            currentDifficulty,
+            pencilMode,
+            selectedCell,
+        };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(serializeState(state)));
     } catch (e) {
         // Quota exceeded, disabled storage, etc. — silently ignore.
     }
@@ -472,7 +436,17 @@ function loadGame() {
         const raw = localStorage.getItem(SAVE_KEY);
         if (!raw) return false;
         const data = JSON.parse(raw);
-        if (!deserializeState(data)) return false;
+        const restored = deserializeState(data);
+        if (!restored) return false;
+
+        // Restore all global state variables
+        originalPuzzle = restored.originalPuzzle;
+        board = restored.board;
+        pencilMarks = restored.pencilMarks;
+        moveHistory = restored.moveHistory;
+        currentDifficulty = restored.currentDifficulty;
+        pencilMode = restored.pencilMode;
+        selectedCell = restored.selectedCell;
 
         // Sync pencil mode button UI with restored state
         if (pencilMode) {
