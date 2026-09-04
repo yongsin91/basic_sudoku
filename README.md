@@ -48,12 +48,13 @@ basic_sudoku/
 ├── script.js                   # Game logic, event handling, pencil marks, save/load, timer/scoring
 ├── serialize.js                # Pure state serialization (Sets ↔ arrays)
 ├── scoring.js                  # Pure score computation, time formatting, best scores
+├── storage.js                  # Shared localStorage safe-access helper
 ├── generator.js                # Puzzle generator (backtracking + MRV solver)
 ├── package.json                # npm metadata & test scripts
 ├── test/
 │   ├── generator.test.js       # 20 assert-based tests for generator.js
 │   ├── save-load.test.js       # 21 assert-based tests for serialize.js
-│   └── scoring.test.js         # 27 assert-based tests for scoring.js
+│   └── scoring.test.js         # 30 assert-based tests for scoring.js
 ├── PLAN-random-puzzle-generation.md  # Design notes for the generator
 ├── PLAN-pencil-marks.md             # Design notes for pencil marks
 ├── PLAN-save-load.md                # Design notes for save/load feature
@@ -125,10 +126,19 @@ basic_sudoku/
 
 | Function | Description |
 |---|---|
-| `computeScore(difficulty, elapsedSeconds, mistakeCount)` | Computes final score from difficulty, time, and mistakes; returns `{ base, timePenalty, mistakePenalty, final }` |
+| `computeScore(difficulty, elapsedSeconds, mistakeCount)` | Computes final score from difficulty, time, and mistakes; returns `{ base, timePenalty, mistakePenalty, final, breakdown }` |
 | `formatTime(seconds)` | Formats seconds as `MM:SS` string |
-| `getBestScores()` | Reads best scores from `localStorage`; returns `{ easy, medium, hard }` or `{}` |
+| `getBestScores()` | Reads all best scores from `localStorage`; returns `{ easy, medium, hard }` or `{}` |
+| `getBestScore(difficulty)` | Reads the best score for a single difficulty; returns `0` if none exists |
 | `saveBestScore(difficulty, score)` | Saves score as best for its difficulty if higher than existing; returns `true` if new best |
+
+---
+
+## Functions Reference (`storage.js`)
+
+| Function | Description |
+|---|---|
+| `withLocalStorage(fn, fallback)` | Executes `fn` with localStorage access, returning `fallback` if storage is unavailable or `fn` throws |
 
 ---
 
@@ -173,6 +183,7 @@ basic_sudoku/
 | `elapsedSeconds` | Number — accumulated seconds for the current game (persisted via save/load) |
 | `mistakeCount` | Number — total conflicting placements this game (persisted via save/load) |
 | `timerInterval` | `setInterval` ID for the timer tick (runtime only, not persisted) |
+| `timerRunning` | Boolean — whether the timer is actively ticking (runtime only, not persisted) |
 | `initPencilMarks()` | Initializes the `pencilMarks` array with 81 empty Sets |
 
 ### Rendering
@@ -203,9 +214,10 @@ basic_sudoku/
 
 | Function | Description |
 |---|---|
-| `startTimer()` | Resets `elapsedSeconds` to 0, starts 1-second interval, updates display |
-| `resumeTimer()` | Continues timer from saved `elapsedSeconds` (used on save/load restore) |
-| `stopTimer()` | Clears the timer interval |
+| `tickTimer()` | Shared timer logic: updates displays, starts 1-second interval, sets `timerRunning` |
+| `startTimer()` | Resets `elapsedSeconds` to 0, calls `tickTimer()` |
+| `resumeTimer()` | Calls `tickTimer()` without resetting (used on save/load restore) |
+| `stopTimer()` | Clears the timer interval, sets `timerRunning` to false |
 | `updateTimerDisplay()` | Updates the `#timer` element text with formatted elapsed time |
 | `updateMistakeDisplay()` | Updates the `#mistakes` element text with current mistake count |
 
@@ -223,7 +235,7 @@ basic_sudoku/
 | Function | Description |
 |---|---|
 | `saveGame()` | Serializes the full game state and writes it to `localStorage['sudoku-save']`; called after every state-changing action |
-| `loadGame()` | Reads and parses the save from `localStorage`, restores all state variables, syncs UI buttons; returns `false` if no save or parse error |
+| `loadGame()` | Reads and parses the save from `localStorage`, restores all state variables, syncs UI buttons, calls `checkWin()` to handle already-solved games; returns `false` if no save or parse error |
 | `clearSave()` | Removes the save entry from `localStorage`; called on win and before a fresh new game |
 
 ### Game Management
@@ -298,8 +310,8 @@ basic_sudoku/
 cd basic_sudoku
 npm test               # 20 generator tests
 npm run test:save      # 21 save/load serialization tests
-npm run test:scoring   # 27 scoring tests
-npm run test:all       # all 68 tests
+npm run test:scoring   # 30 scoring tests
+npm run test:all       # all 71 tests
 ```
 All tests use Node's built-in `assert` module — no external dependencies.
 
