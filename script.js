@@ -2,35 +2,6 @@
 //  Sudoku — Vanilla JS
 // ============================================================
 
-// ---- 3a. Puzzle Data ----------------------------------------
-// Each puzzle is an 81-char string: digits 1-9 for pre-filled
-// cells, '0' or '.' for empty cells.
-// 5 per difficulty (15 total).
-
-const PUZZLES = {
-    easy: [
-        "530070000600195000098000060800060003400803001700020006060000280000419005000080079",
-        "002608000040020010008000300600702005007000800805030900003000200050090060000405300",
-        "100400006090030010000008020000007000400000003000500000080200000050060070200003004",
-        "000900002050123400030000160908000000070000090000000205091000050007439020400007000",
-        "300000000050703008000028070700000043000000000003904105400300000061000080000702000"
-    ],
-    medium: [
-        "000002000004500300700000080000040003030000060400080000020000005006007400000300000",
-        "000000000000003085001020000000507000004000100090000000500000073002010000000040009",
-        "200300010050000007000004000800000050003020060000700000004000900060000080000005000",
-        "000000000000010604000400000000080010020000030040070000000005000905080000000000000",
-        "000000080000007000050000200000400007800000005600100000009000030000500000060000000"
-    ],
-    hard: [
-        "800000000003600000070090200050007000000045700000100030001000068008500010090000400",
-        "000000010400000000020000000000050407008000300001090000300400200050100000000806000",
-        "000000000000003085001020000000507000004000100090000000500000073002010000000040009",
-        "000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-    ]
-};
-
 // ---- 3b. Game State -----------------------------------------
 let board = [];          // current 9x9 array of values (0 = empty)
 let originalPuzzle = [];  // snapshot of the starting puzzle
@@ -42,15 +13,6 @@ let pencilMode = false;   // false = pen mode (place numbers), true = pencil mod
 
 // ---- 3c. Render Board ---------------------------------------
 const boardEl = document.getElementById('board');
-
-function parsePuzzle(str) {
-    const arr = [];
-    for (let i = 0; i < 81; i++) {
-        const ch = str[i];
-        arr.push(ch === '.' || ch === '0' ? 0 : parseInt(ch, 10));
-    }
-    return arr;
-}
 
 function renderBoard() {
     boardEl.innerHTML = '';
@@ -400,19 +362,7 @@ function initPencilMarks() {
 function newGame(difficulty) {
     currentDifficulty = difficulty;
 
-    // Try to generate a random puzzle; fall back to static puzzles on failure
-    try {
-        if (typeof generatePuzzle === 'function') {
-            originalPuzzle = generatePuzzle(difficulty);
-        } else {
-            throw new Error('Generator not available');
-        }
-    } catch (err) {
-        console.warn('Puzzle generation failed, falling back to static puzzles:', err);
-        const puzzles = PUZZLES[difficulty];
-        const randomPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
-        originalPuzzle = parsePuzzle(randomPuzzle);
-    }
+    originalPuzzle = generatePuzzle(difficulty);
 
     board = [...originalPuzzle];
     moveHistory = [];
