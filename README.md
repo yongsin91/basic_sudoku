@@ -2,6 +2,7 @@
 
 ## Version
 
+**v1.2.1** — Remove hardcoded puzzle fallback, generator is sole source (2026-09-04)
 **v1.2.0** — Adds pencil marks (candidate notes) (2026-09-04)
 **v1.1.0** — Adds random puzzle generation (2026-09-03)
 **v1.0.0** — Initial release (2026-08-31)
@@ -37,7 +38,7 @@ No installation required — just click and start solving!
 basic_sudoku/
 ├── index.html                  # Page structure & DOM elements
 ├── style.css                   # All styling, responsive layout
-├── script.js                   # Game logic, puzzle data, event handling
+├── script.js                   # Game logic, event handling, pencil marks
 ├── generator.js                # Puzzle generator (backtracking + MRV solver)
 ├── package.json                # npm metadata & test script
 ├── test/
@@ -56,7 +57,6 @@ basic_sudoku/
 - **3 difficulty levels** — Easy, Medium, Hard (selected via buttons)
 - **Algorithmic random puzzle generation** — each new game generates a unique puzzle on-the-fly using a backtracking solver with bitmask constraints and the MRV (minimum remaining values) heuristic
 - **Unique-solution guarantee** — cells are removed only if the puzzle retains a single solution
-- **Static puzzle fallback** — 15 pre-made puzzles (5 per difficulty) remain in `script.js` as a safety net if the generator fails
 - **Difficulty-scaled clue counts** — Easy (40–45 clues), Medium (32–36), Hard (25–30)
 
 ### Input Methods
@@ -112,11 +112,10 @@ basic_sudoku/
 
 ## Functions Reference (`script.js`)
 
-### Puzzle Data & State
+### Game State
 
 | Function / Variable | Description |
 |---|---|
-| `PUZZLES` | Object with `easy`, `medium`, `hard` arrays, each containing 5 puzzle strings (81 chars, `0` = empty) |
 | `board` | Array of 81 integers representing the current board state (0 = empty) |
 | `originalPuzzle` | Snapshot of the starting puzzle; used to identify locked cells |
 | `moveHistory` | Stack of `{ row, col, prevValue, newValue, pencilSnapshot }` objects for undo support |
@@ -124,7 +123,6 @@ basic_sudoku/
 | `currentDifficulty` | String tracking the active difficulty (`'easy'`, `'medium'`, `'hard'`) |
 | `pencilMarks` | Array of 81 `Set` objects, each containing candidate digits (1–9) for that cell |
 | `pencilMode` | Boolean — `false` = pen mode (place numbers), `true` = pencil mode (toggle candidates) |
-| `parsePuzzle(str)` | Converts an 81-char puzzle string into an array of 81 integers |
 | `initPencilMarks()` | Initializes the `pencilMarks` array with 81 empty Sets |
 
 ### Rendering
@@ -164,7 +162,7 @@ basic_sudoku/
 
 | Function | Description |
 |---|---|
-| `newGame(difficulty)` | Generates a random puzzle (via `generatePuzzle()` with static fallback), resets all state, re-renders the board, updates active button styling |
+| `newGame(difficulty)` | Generates a random puzzle via `generatePuzzle()`, resets all state, re-renders the board, updates active button styling |
 
 ### Event Listeners
 
