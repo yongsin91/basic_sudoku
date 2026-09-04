@@ -12,7 +12,8 @@
  * Convert live game state (with Sets) into a JSON-safe plain object.
  *
  * @param {Object} state - { originalPuzzle, board, pencilMarks,
- *   moveHistory, currentDifficulty, pencilMode, selectedCell }
+ *   moveHistory, currentDifficulty, pencilMode, selectedCell,
+ *   elapsedSeconds, mistakeCount }
  * @returns {Object} JSON-safe plain object
  */
 function serializeState(state) {

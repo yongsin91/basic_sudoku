@@ -7,6 +7,12 @@
 //  persistence via localStorage.
 //
 //  Works in both Node.js (module.exports) and browser (global).
+//  In Node, auto-loads storage.js for the withLocalStorage helper.
+//  In browser, withLocalStorage is available as a global from <script>.
+
+if (typeof require !== 'undefined' && typeof withLocalStorage === 'undefined') {
+    require('./storage.js');
+}
 
 // ---- Constants ----------------------------------------------
 const DIFFICULTY_BASE = {
@@ -29,7 +35,7 @@ const BEST_SCORES_KEY = 'sudoku-best-scores';
  * @param {string} difficulty - 'easy' | 'medium' | 'hard'
  * @param {number} elapsedSeconds - total seconds taken
  * @param {number} mistakeCount - number of conflicting placements
- * @returns {Object} { base, timePenalty, mistakePenalty, final }
+ * @returns {Object} { base, timePenalty, mistakePenalty, final, breakdown }
  */
 function computeScore(difficulty, elapsedSeconds, mistakeCount) {
     const base = DIFFICULTY_BASE[difficulty] || DIFFICULTY_BASE.easy;
@@ -47,8 +53,9 @@ function computeScore(difficulty, elapsedSeconds, mistakeCount) {
 
     const minScore = Math.floor(base * MIN_SCORE_FRACTION);
     const final = Math.max(minScore, base - timePenalty - mistakePenalty);
+    const breakdown = `${base} - ${timePenalty} - ${mistakePenalty} = ${final}`;
 
-    return { base, timePenalty, mistakePenalty, final };
+    return { base, timePenalty, mistakePenalty, final, breakdown };
 }
 
 // ---- Time Formatting ----------------------------------------
@@ -71,14 +78,11 @@ function formatTime(seconds) {
  * or {} if none exist or storage is unavailable.
  */
 function getBestScores() {
-    try {
-        if (typeof Storage === 'undefined') return {};
+    return withLocalStorage(() => {
         const raw = localStorage.getItem(BEST_SCORES_KEY);
         if (!raw) return {};
         return JSON.parse(raw);
-    } catch (e) {
-        return {};
-    }
+    }, {});
 }
 
 /**
@@ -90,18 +94,26 @@ function getBestScores() {
  * @returns {boolean} true if a new best was saved, false otherwise
  */
 function saveBestScore(difficulty, score) {
-    try {
-        if (typeof Storage === 'undefined') return false;
-        const scores = getBestScores();
-        if (!scores[difficulty] || score > scores[difficulty]) {
-            scores[difficulty] = score;
+    const scores = getBestScores();
+    if (!scores[difficulty] || score > scores[difficulty]) {
+        scores[difficulty] = score;
+        return withLocalStorage(() => {
             localStorage.setItem(BEST_SCORES_KEY, JSON.stringify(scores));
             return true;
-        }
-        return false;
-    } catch (e) {
-        return false;
+        }, false);
     }
+    return false;
+}
+
+/**
+ * Read the best score for a single difficulty.
+ *
+ * @param {string} difficulty - 'easy' | 'medium' | 'hard'
+ * @returns {number} best score, or 0 if none exists
+ */
+function getBestScore(difficulty) {
+    const scores = getBestScores();
+    return scores[difficulty] || 0;
 }
 
 // ---- Exports ------------------------------------------------
@@ -115,6 +127,7 @@ if (typeof module !== 'undefined' && module.exports) {
         computeScore,
         formatTime,
         getBestScores,
+        getBestScore,
         saveBestScore,
     };
 }
