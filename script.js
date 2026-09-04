@@ -507,4 +507,9 @@ function clearSave() {
 }
 
 // ---- Start --------------------------------------------------
-newGame('easy');
+if (!loadGame()) {
+    newGame('easy');
+} else {
+    renderBoard();
+    checkWin();
+}
