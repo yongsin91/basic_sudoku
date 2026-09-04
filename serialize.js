@@ -30,6 +30,8 @@ function serializeState(state) {
         currentDifficulty: state.currentDifficulty,
         pencilMode: state.pencilMode,
         selectedCell: state.selectedCell ? { ...state.selectedCell } : null,
+        elapsedSeconds: state.elapsedSeconds || 0,
+        mistakeCount: state.mistakeCount || 0,
     };
 }
 
@@ -60,6 +62,8 @@ function deserializeState(data) {
             currentDifficulty: data.currentDifficulty || 'easy',
             pencilMode: !!data.pencilMode,
             selectedCell: data.selectedCell ? { ...data.selectedCell } : null,
+            elapsedSeconds: data.elapsedSeconds || 0,
+            mistakeCount: data.mistakeCount || 0,
         };
     } catch (e) {
         return null;

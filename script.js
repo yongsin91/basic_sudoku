@@ -10,6 +10,49 @@ let selectedCell = null;  // { row, col } or null
 let currentDifficulty = 'easy';
 let pencilMarks = [];     // array of 81 Sets, each containing candidate digits (1-9)
 let pencilMode = false;   // false = pen mode (place numbers), true = pencil mode (toggle candidates)
+let elapsedSeconds = 0;   // accumulated time for the current game (persisted)
+let mistakeCount = 0;     // number of conflicting placements this game (persisted)
+let timerInterval = null; // setInterval ID for the timer (runtime only)
+
+// ---- Timer & Display ----------------------------------------
+const timerEl = document.getElementById('timer');
+const mistakesEl = document.getElementById('mistakes');
+
+function startTimer() {
+    stopTimer();
+    elapsedSeconds = 0;
+    updateTimerDisplay();
+    updateMistakeDisplay();
+    timerInterval = setInterval(() => {
+        elapsedSeconds++;
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function resumeTimer() {
+    stopTimer();
+    updateTimerDisplay();
+    updateMistakeDisplay();
+    timerInterval = setInterval(() => {
+        elapsedSeconds++;
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+function updateTimerDisplay() {
+    timerEl.textContent = formatTime(elapsedSeconds);
+}
+
+function updateMistakeDisplay() {
+    mistakesEl.textContent = `Mistakes: ${mistakeCount}`;
+}
 
 // ---- 3c. Render Board ---------------------------------------
 const boardEl = document.getElementById('board');
@@ -179,6 +222,13 @@ function placeNumber(num) {
     moveHistory.push({ row, col, prevValue, newValue: num, pencilSnapshot });
 
     board[idx] = num;
+
+    // Track mistakes: if the placed number creates a conflict, count it
+    if (hasConflict(row, col, num)) {
+        mistakeCount++;
+        updateMistakeDisplay();
+    }
+
     renderBoard();
     checkWin();
     saveGame();
@@ -352,6 +402,26 @@ const winBanner = document.getElementById('win-banner');
 
 function checkWin() {
     if (isBoardComplete()) {
+        stopTimer();
+        const result = computeScore(currentDifficulty, elapsedSeconds, mistakeCount);
+        const isNewBest = saveBestScore(currentDifficulty, result.final);
+        const bestScores = getBestScores();
+        const best = bestScores[currentDifficulty] || 0;
+
+        // Populate win banner
+        document.getElementById('win-time').textContent = formatTime(elapsedSeconds);
+        document.getElementById('win-mistakes').textContent = mistakeCount;
+        document.getElementById('win-score').textContent = result.final;
+        document.getElementById('win-best').textContent = best;
+
+        // Show "New Best!" badge if applicable
+        const bestLabel = document.querySelector('.win-best-row .win-stat-label');
+        if (isNewBest) {
+            bestLabel.textContent = 'Best 🏆 New!';
+        } else {
+            bestLabel.textContent = 'Best';
+        }
+
         winBanner.classList.remove('hidden');
         clearSave();
     } else {
@@ -376,6 +446,7 @@ function newGame(difficulty) {
     moveHistory = [];
     selectedCell = null;
     initPencilMarks();
+    mistakeCount = 0;
     winBanner.classList.add('hidden');
 
     // Update active button styling
@@ -383,6 +454,7 @@ function newGame(difficulty) {
     document.getElementById(`btn-${difficulty}`).classList.add('active');
 
     renderBoard();
+    startTimer();
     saveGame();
 }
 
@@ -418,6 +490,8 @@ function saveGame() {
             currentDifficulty,
             pencilMode,
             selectedCell,
+            elapsedSeconds,
+            mistakeCount,
         };
         localStorage.setItem(SAVE_KEY, JSON.stringify(serializeState(state)));
     } catch (e) {
@@ -447,6 +521,8 @@ function loadGame() {
         currentDifficulty = restored.currentDifficulty;
         pencilMode = restored.pencilMode;
         selectedCell = restored.selectedCell;
+        elapsedSeconds = restored.elapsedSeconds || 0;
+        mistakeCount = restored.mistakeCount || 0;
 
         // Sync pencil mode button UI with restored state
         if (pencilMode) {
@@ -486,5 +562,6 @@ if (!loadGame()) {
     newGame('easy');
 } else {
     renderBoard();
+    resumeTimer();
     checkWin();
 }

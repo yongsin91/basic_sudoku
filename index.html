@@ -16,6 +16,11 @@
             <button id="btn-hard" class="diff-btn">Hard</button>
         </div>
 
+        <div class="status-bar">
+            <span id="timer" class="timer">00:00</span>
+            <span id="mistakes" class="mistakes">Mistakes: 0</span>
+        </div>
+
         <div id="board" class="board"></div>
 
         <div class="number-pad">
@@ -38,12 +43,31 @@
 
         <div id="win-banner" class="win-banner hidden">
             <p>🎉 You solved it!</p>
+            <div class="win-stats">
+                <div class="win-stat-row">
+                    <span class="win-stat-label">Time</span>
+                    <span id="win-time" class="win-stat-value">00:00</span>
+                </div>
+                <div class="win-stat-row">
+                    <span class="win-stat-label">Mistakes</span>
+                    <span id="win-mistakes" class="win-stat-value">0</span>
+                </div>
+                <div class="win-stat-row win-score-row">
+                    <span class="win-stat-label">Score</span>
+                    <span id="win-score" class="win-stat-value">0</span>
+                </div>
+                <div class="win-stat-row win-best-row">
+                    <span class="win-stat-label">Best</span>
+                    <span id="win-best" class="win-stat-value">0</span>
+                </div>
+            </div>
             <button id="btn-new-game" class="action-btn">New Game</button>
         </div>
     </div>
 
     <script src="generator.js"></script>
     <script src="serialize.js"></script>
+    <script src="scoring.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

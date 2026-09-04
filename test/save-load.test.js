@@ -45,6 +45,8 @@ function makeSampleState() {
         currentDifficulty: 'medium',
         pencilMode: true,
         selectedCell: { row: 0, col: 2 },
+        elapsedSeconds: 185,
+        mistakeCount: 3,
     };
 }
 
@@ -129,6 +131,13 @@ test('7. null selectedCell serializes to null', () => {
     assert.strictEqual(serialized.selectedCell, null);
 });
 
+test('7b. elapsedSeconds and mistakeCount are preserved', () => {
+    const state = makeSampleState();
+    const serialized = serializeState(state);
+    assert.strictEqual(serialized.elapsedSeconds, 185);
+    assert.strictEqual(serialized.mistakeCount, 3);
+});
+
 // ============================================================
 //  deserializeState
 // ============================================================
@@ -144,6 +153,8 @@ test('8. round-trip: serialize → deserialize produces identical state', () => 
     assert.strictEqual(restored.currentDifficulty, original.currentDifficulty);
     assert.strictEqual(restored.pencilMode, original.pencilMode);
     assert.deepStrictEqual(restored.selectedCell, original.selectedCell);
+    assert.strictEqual(restored.elapsedSeconds, original.elapsedSeconds);
+    assert.strictEqual(restored.mistakeCount, original.mistakeCount);
 });
 
 test('9. round-trip: pencilMarks are restored as Sets with same contents', () => {
@@ -226,6 +237,24 @@ test('17. defaults currentDifficulty to "easy" if missing', () => {
     delete serialized.currentDifficulty;
     const restored = deserializeState(serialized);
     assert.strictEqual(restored.currentDifficulty, 'easy');
+});
+
+test('17b. defaults elapsedSeconds and mistakeCount to 0 if missing', () => {
+    const state = makeSampleState();
+    const serialized = serializeState(state);
+    delete serialized.elapsedSeconds;
+    delete serialized.mistakeCount;
+    const restored = deserializeState(serialized);
+    assert.strictEqual(restored.elapsedSeconds, 0);
+    assert.strictEqual(restored.mistakeCount, 0);
+});
+
+test('17c. handles elapsedSeconds and mistakeCount in JSON round-trip', () => {
+    const state = makeSampleState();
+    const json = JSON.stringify(serializeState(state));
+    const restored = deserializeState(JSON.parse(json));
+    assert.strictEqual(restored.elapsedSeconds, 185);
+    assert.strictEqual(restored.mistakeCount, 3);
 });
 
 test('18. coerces pencilMode to boolean', () => {

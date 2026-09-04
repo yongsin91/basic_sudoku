@@ -1,11 +1,12 @@
 {
   "name": "basic-sudoku",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Browser-based Sudoku game with random puzzle generation",
   "scripts": {
     "test": "node test/generator.test.js",
     "test:save": "node test/save-load.test.js",
-    "test:all": "node test/generator.test.js && node test/save-load.test.js"
+    "test:scoring": "node test/scoring.test.js",
+    "test:all": "node test/generator.test.js && node test/save-load.test.js && node test/scoring.test.js"
   },
   "license": "MIT"
 }
