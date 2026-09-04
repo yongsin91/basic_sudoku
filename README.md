@@ -11,6 +11,12 @@
 
 A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step — just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, full undo history, and a responsive layout that works on desktop and mobile.
 
+### 🎮 Play Now
+
+**[https://yongsin91.github.io/basic_sudoku/](https://yongsin91.github.io/basic_sudoku/)**
+
+No installation required — just click and start solving!
+
 ---
 
 ## Tech Stack
@@ -181,8 +187,9 @@ basic_sudoku/
 
 ## How to Run
 
-1. Open `index.html` directly in a browser, **or**
-2. Serve via a local HTTP server:
+1. **Play online** — Visit [https://yongsin91.github.io/basic_sudoku/](https://yongsin91.github.io/basic_sudoku/) (hosted via GitHub Pages)
+2. **Run locally** — Open `index.html` directly in a browser, **or**
+3. **Serve via a local HTTP server:**
    ```bash
    cd basic_sudoku
    python3 -m http.server 8765
@@ -201,7 +208,6 @@ Runs 20 assert-based tests covering solution validity, uniqueness, clue counts, 
 
 ## Future Enhancements (Not Yet Implemented)
 
-- **Deploy to GitHub Pages** — The game is fully static (HTML/CSS/JS, no build step, no server-side dependencies) and is ready to be hosted on GitHub Pages. Enabling it would make the game accessible at `https://yongsin91.github.io/basic_sudoku/` with zero code changes needed.
 - Timer / scoring system
 - Hint system (reveal one correct cell)
 - Save / load game progress (localStorage)
