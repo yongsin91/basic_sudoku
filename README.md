@@ -2,16 +2,21 @@
 
 ## Version
 
+**v1.3.0** — Adds save/load game progress via localStorage (2026-09-05)
+
 **v1.2.1** — Remove hardcoded puzzle fallback, generator is sole source (2026-09-04)
+
 **v1.2.0** — Adds pencil marks (candidate notes) (2026-09-04)
+
 **v1.1.0** — Adds random puzzle generation (2026-09-03)
+
 **v1.0.0** — Initial release (2026-08-31)
 
 ---
 
 ## Overview
 
-A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step — just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, pencil marks (candidate notes), full undo history, and a responsive layout that works on desktop and mobile.
+A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step — just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, pencil marks (candidate notes), full undo history, automatic save/load via localStorage, and a responsive layout that works on desktop and mobile.
 
 ### 🎮 Play Now
 
@@ -38,13 +43,16 @@ No installation required — just click and start solving!
 basic_sudoku/
 ├── index.html                  # Page structure & DOM elements
 ├── style.css                   # All styling, responsive layout
-├── script.js                   # Game logic, event handling, pencil marks
+├── script.js                   # Game logic, event handling, pencil marks, save/load
+├── serialize.js                # Pure state serialization (Sets ↔ arrays)
 ├── generator.js                # Puzzle generator (backtracking + MRV solver)
-├── package.json                # npm metadata & test script
+├── package.json                # npm metadata & test scripts
 ├── test/
-│   └── generator.test.js       # 20 assert-based tests for generator.js
+│   ├── generator.test.js       # 20 assert-based tests for generator.js
+│   └── save-load.test.js       # 18 assert-based tests for serialize.js
 ├── PLAN-random-puzzle-generation.md  # Design notes for the generator
 ├── PLAN-pencil-marks.md             # Design notes for pencil marks
+├── PLAN-save-load.md                # Design notes for save/load feature
 └── README.md                   # This documentation
 ```
 
@@ -84,6 +92,13 @@ basic_sudoku/
 - **Clear** — Wipes all user-entered values and pencil marks, restoring the original puzzle in one action
 - **New Game** — Starts a new puzzle at the current difficulty (also accessible via the win banner)
 
+### Save / Load Game Progress
+- **Automatic save** — The full game state (board, pencil marks, undo history, difficulty, pen/pencil mode, cell selection) is saved to `localStorage` after every move — no manual save button needed
+- **Automatic load** — On page load, the saved game is restored automatically; if no save exists (or it's corrupted), a fresh game starts
+- **Persists across sessions** — Saved data survives browser restarts, machine reboots, and tab closures; it remains until the puzzle is solved or the browser's site data is cleared
+- **Clears on win** — When the puzzle is solved, the save is removed so the next visit starts a fresh game
+- **Graceful degradation** — If `localStorage` is unavailable (e.g. private browsing mode), save/load is silently skipped without errors
+
 ### Win State
 - **Auto-detection** — Game detects completion when all 81 cells are filled with no conflicts
 - **Win banner** — Styled in-page "🎉 You solved it!" message with a "New Game" button (no browser alerts)
@@ -91,6 +106,15 @@ basic_sudoku/
 ### Responsive Design
 - **Desktop** — Fixed 450×450px board with full-size number pad
 - **Mobile/tablet** — Board and number pad scale to 90vw, font sizes reduce for smaller screens
+
+---
+
+## Functions Reference (`serialize.js`)
+
+| Function | Description |
+|---|---|
+| `serializeState(state)` | Converts a game state object (with `Set` arrays) into a plain JSON-serializable object |
+| `deserializeState(data)` | Converts a plain serialized object back into a game state object (reconstructs `Set`s from arrays); returns `null` on invalid input |
 
 ---
 
@@ -158,6 +182,14 @@ basic_sudoku/
 | `isBoardComplete()` | Returns `true` if all 81 cells are filled and there are zero conflicts |
 | `checkWin()` | Calls `isBoardComplete()` and shows/hides the win banner accordingly |
 
+### Save / Load
+
+| Function | Description |
+|---|---|
+| `saveGame()` | Serializes the full game state and writes it to `localStorage['sudoku-save']`; called after every state-changing action |
+| `loadGame()` | Reads and parses the save from `localStorage`, restores all state variables, syncs UI buttons; returns `false` if no save or parse error |
+| `clearSave()` | Removes the save entry from `localStorage`; called on win and before a fresh new game |
+
 ### Game Management
 
 | Function | Description |
@@ -219,9 +251,11 @@ basic_sudoku/
 
 ```bash
 cd basic_sudoku
-npm test
+npm test          # 20 generator tests
+npm run test:save # 18 save/load serialization tests
+npm run test:all  # all 38 tests
 ```
-Runs 20 assert-based tests covering solution validity, uniqueness, clue counts, and performance (no external dependencies — uses Node's built-in `assert` module).
+All tests use Node's built-in `assert` module — no external dependencies.
 
 ---
 
@@ -229,5 +263,4 @@ Runs 20 assert-based tests covering solution validity, uniqueness, clue counts, 
 
 - Timer / scoring system
 - Hint system (reveal one correct cell)
-- Save / load game progress (localStorage)
 - Puzzle import / export

@@ -181,6 +181,7 @@ function placeNumber(num) {
     board[idx] = num;
     renderBoard();
     checkWin();
+    saveGame();
 }
 
 function togglePencilMark(num) {
@@ -198,6 +199,7 @@ function togglePencilMark(num) {
         pencilMarks[idx].add(num);
     }
     renderBoard();
+    saveGame();
 }
 
 function clearPencilMarksFromPeers(row, col, num) {
@@ -241,6 +243,7 @@ function eraseSelected() {
         if (pencilMarks[idx].size > 0) {
             pencilMarks[idx].clear();
             renderBoard();
+            saveGame();
         }
         return;
     }
@@ -250,6 +253,7 @@ function eraseSelected() {
     moveHistory.push({ row, col, prevValue: board[idx], newValue: 0, pencilSnapshot: {} });
     board[idx] = 0;
     renderBoard();
+    saveGame();
 }
 
 // Keyboard input
@@ -307,6 +311,7 @@ function togglePencilMode() {
         pencilBtn.textContent = '🖊️ Pen';
         pencilBtn.classList.remove('active');
     }
+    saveGame();
 }
 
 pencilBtn.addEventListener('click', togglePencilMode);
@@ -327,6 +332,7 @@ document.getElementById('btn-undo').addEventListener('click', () => {
     }
 
     renderBoard();
+    saveGame();
 });
 
 // ---- 3i. Clear -----------------------------------------------
@@ -338,6 +344,7 @@ document.getElementById('btn-clear').addEventListener('click', () => {
     }
     moveHistory = [];
     renderBoard();
+    saveGame();
 });
 
 // ---- 3j. Win Detection --------------------------------------
@@ -346,6 +353,7 @@ const winBanner = document.getElementById('win-banner');
 function checkWin() {
     if (isBoardComplete()) {
         winBanner.classList.remove('hidden');
+        clearSave();
     } else {
         winBanner.classList.add('hidden');
     }
@@ -375,6 +383,7 @@ function newGame(difficulty) {
     document.getElementById(`btn-${difficulty}`).classList.add('active');
 
     renderBoard();
+    saveGame();
 }
 
 document.getElementById('btn-easy').addEventListener('click', () => newGame('easy'));
@@ -382,5 +391,100 @@ document.getElementById('btn-medium').addEventListener('click', () => newGame('m
 document.getElementById('btn-hard').addEventListener('click', () => newGame('hard'));
 document.getElementById('btn-new-game').addEventListener('click', () => newGame(currentDifficulty));
 
+// ---- 3l. Save / Load (localStorage) -------------------------
+// The browser's localStorage API persists data to disk, surviving
+// browser restarts and machine reboots. We serialize the full game
+// state into a single JSON object under the key 'sudoku-save'.
+
+const SAVE_KEY = 'sudoku-save';
+
+// serializeState / deserializeState are imported from serialize.js
+// (loaded via <script> in the browser, or require'd in Node tests).
+// They are pure functions that accept/return a state object, keeping
+// the serialization logic testable without DOM access.
+
+/**
+ * Save the current game state to localStorage.
+ * Silently fails if localStorage is unavailable (e.g. private mode).
+ */
+function saveGame() {
+    try {
+        if (typeof Storage === 'undefined') return;
+        const state = {
+            originalPuzzle,
+            board,
+            pencilMarks,
+            moveHistory,
+            currentDifficulty,
+            pencilMode,
+            selectedCell,
+        };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(serializeState(state)));
+    } catch (e) {
+        // Quota exceeded, disabled storage, etc. — silently ignore.
+    }
+}
+
+/**
+ * Load a saved game from localStorage into the live state variables.
+ * Does NOT re-render — caller must call renderBoard() afterwards.
+ * Returns true if a save was loaded, false otherwise.
+ */
+function loadGame() {
+    try {
+        if (typeof Storage === 'undefined') return false;
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        const restored = deserializeState(data);
+        if (!restored) return false;
+
+        // Restore all global state variables
+        originalPuzzle = restored.originalPuzzle;
+        board = restored.board;
+        pencilMarks = restored.pencilMarks;
+        moveHistory = restored.moveHistory;
+        currentDifficulty = restored.currentDifficulty;
+        pencilMode = restored.pencilMode;
+        selectedCell = restored.selectedCell;
+
+        // Sync pencil mode button UI with restored state
+        if (pencilMode) {
+            pencilBtn.textContent = '✏️ Pencil';
+            pencilBtn.classList.add('active');
+        } else {
+            pencilBtn.textContent = '🖊️ Pen';
+            pencilBtn.classList.remove('active');
+        }
+
+        // Sync difficulty button styling
+        document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+        const diffBtn = document.getElementById(`btn-${currentDifficulty}`);
+        if (diffBtn) diffBtn.classList.add('active');
+
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+/**
+ * Remove the saved game from localStorage.
+ * Called when a puzzle is solved or a brand-new game is started.
+ */
+function clearSave() {
+    try {
+        if (typeof Storage === 'undefined') return;
+        localStorage.removeItem(SAVE_KEY);
+    } catch (e) {
+        // Silently ignore.
+    }
+}
+
 // ---- Start --------------------------------------------------
-newGame('easy');
+if (!loadGame()) {
+    newGame('easy');
+} else {
+    renderBoard();
+    checkWin();
+}
