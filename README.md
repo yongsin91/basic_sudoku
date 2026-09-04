@@ -2,6 +2,7 @@
 
 ## Version
 
+**v1.2.0** — Adds pencil marks (candidate notes) (2026-09-04)
 **v1.1.0** — Adds random puzzle generation (2026-09-03)
 **v1.0.0** — Initial release (2026-08-31)
 
@@ -9,7 +10,7 @@
 
 ## Overview
 
-A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step — just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, full undo history, and a responsive layout that works on desktop and mobile.
+A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step — just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, pencil marks (candidate notes), full undo history, and a responsive layout that works on desktop and mobile.
 
 ### 🎮 Play Now
 
@@ -42,6 +43,7 @@ basic_sudoku/
 ├── test/
 │   └── generator.test.js       # 20 assert-based tests for generator.js
 ├── PLAN-random-puzzle-generation.md  # Design notes for the generator
+├── PLAN-pencil-marks.md             # Design notes for pencil marks
 └── README.md                   # This documentation
 ```
 
@@ -62,6 +64,7 @@ basic_sudoku/
 - **On-screen number pad** — Click buttons 1–9 (essential for touch devices)
 - **Erase** — Backspace, Delete, or 0 key removes the selected cell's value
 - **Arrow keys** — Navigate between cells without clicking
+- **Pen / Pencil toggle** — Press `P` or click the toggle button to switch between placing numbers and toggling candidate notes
 
 ### Visual Aids
 - **Row / column / box highlighting** — Selecting a cell highlights its entire row, column, and 3×3 box
@@ -69,9 +72,16 @@ basic_sudoku/
 - **Conflict highlighting** — Cells that violate Sudoku rules (duplicate in row/column/box) turn red in real-time
 - **Locked cell styling** — Pre-filled puzzle cells are visually distinct (bold, darker background) and cannot be edited
 
+### Pencil Marks (Candidate Notes)
+- **Pen / Pencil mode toggle** — Switch between placing numbers (pen) and toggling candidate notes (pencil) via the button or `P` key
+- **3×3 mini-grid display** — Candidate digits are shown as small numbers in a 3×3 grid within each empty cell
+- **Auto-clear on placement** — When a number is placed, that digit is automatically removed from pencil marks of all peer cells (same row, column, and 3×3 box)
+- **Undo restores pencil marks** — Undoing a placement restores the pencil marks that were auto-cleared
+- **Erase in pencil mode** — Clears all candidate notes in the selected cell
+
 ### Game Controls
-- **Undo** — Full move history; undo step-by-step back to the original puzzle state
-- **Clear** — Wipes all user-entered values, restoring the original puzzle in one action
+- **Undo** — Full move history; undo step-by-step back to the original puzzle state (restores pencil marks too)
+- **Clear** — Wipes all user-entered values and pencil marks, restoring the original puzzle in one action
 - **New Game** — Starts a new puzzle at the current difficulty (also accessible via the win banner)
 
 ### Win State
@@ -109,16 +119,19 @@ basic_sudoku/
 | `PUZZLES` | Object with `easy`, `medium`, `hard` arrays, each containing 5 puzzle strings (81 chars, `0` = empty) |
 | `board` | Array of 81 integers representing the current board state (0 = empty) |
 | `originalPuzzle` | Snapshot of the starting puzzle; used to identify locked cells |
-| `moveHistory` | Stack of `{ row, col, prevValue, newValue }` objects for undo support |
+| `moveHistory` | Stack of `{ row, col, prevValue, newValue, pencilSnapshot }` objects for undo support |
 | `selectedCell` | `{ row, col }` of the currently selected cell, or `null` |
 | `currentDifficulty` | String tracking the active difficulty (`'easy'`, `'medium'`, `'hard'`) |
+| `pencilMarks` | Array of 81 `Set` objects, each containing candidate digits (1–9) for that cell |
+| `pencilMode` | Boolean — `false` = pen mode (place numbers), `true` = pencil mode (toggle candidates) |
 | `parsePuzzle(str)` | Converts an 81-char puzzle string into an array of 81 integers |
+| `initPencilMarks()` | Initializes the `pencilMarks` array with 81 empty Sets |
 
 ### Rendering
 
 | Function | Description |
 |---|---|
-| `renderBoard()` | Clears and rebuilds the 9×9 grid DOM, populates values, marks locked/user-input cells, applies highlights |
+| `renderBoard()` | Clears and rebuilds the 9×9 grid DOM, populates values, renders pencil mark mini-grids, marks locked/user-input cells, applies highlights |
 | `applyHighlights()` | Highlights the selected cell's row, column, and 3×3 box; calls conflict highlighting |
 
 ### Selection & Navigation
@@ -128,12 +141,15 @@ basic_sudoku/
 | `selectCell(row, col)` | Selects a cell if it's not locked; updates `selectedCell` and triggers highlights |
 | `moveSelection(dr, dc)` | Moves the selection by `dr` rows and `dc` columns (clamped to 0–8); used by arrow keys |
 
-### Input
+### Input & Pencil Marks
 
 | Function | Description |
 |---|---|
-| `placeNumber(num)` | Places a number (1–9) in the selected cell; pushes to undo stack; re-renders; checks win |
-| `eraseSelected()` | Clears the selected cell's value; pushes to undo stack; re-renders |
+| `placeNumber(num)` | In pen mode: places a number, auto-clears peer pencil marks, pushes to undo stack. In pencil mode: delegates to `togglePencilMark()` |
+| `togglePencilMark(num)` | Toggles a candidate digit in the selected cell's pencil mark Set |
+| `clearPencilMarksFromPeers(row, col, num)` | Removes `num` from pencil marks of all peer cells (row, column, box); returns a snapshot for undo |
+| `eraseSelected()` | In pen mode: clears the selected cell's value. In pencil mode: clears all pencil marks in the selected cell |
+| `togglePencilMode()` | Switches between pen and pencil mode; updates button label and styling |
 
 ### Validation
 
@@ -156,13 +172,14 @@ basic_sudoku/
 |---|---|---|
 | `.cell` (each) | `click` | Calls `selectCell(row, col)` |
 | `.num-btn` (each) | `click` | Calls `placeNumber(num)` |
-| `#btn-undo` | `click` | Pops last move from history, restores previous value |
-| `#btn-clear` | `click` | Resets all user-entered cells to empty, clears history |
+| `#btn-undo` | `click` | Pops last move from history, restores previous value and pencil marks |
+| `#btn-clear` | `click` | Resets all user-entered cells to empty, clears pencil marks and history |
+| `#btn-pencil` | `click` | Toggles between pen and pencil mode |
 | `#btn-easy` | `click` | Calls `newGame('easy')` |
 | `#btn-medium` | `click` | Calls `newGame('medium')` |
 | `#btn-hard` | `click` | Calls `newGame('hard')` |
 | `#btn-new-game` | `click` | Calls `newGame(currentDifficulty)` |
-| `document` | `keydown` | Handles 1–9 input, erase (Backspace/Delete/0), and arrow key navigation |
+| `document` | `keydown` | Handles 1–9 input, erase (Backspace/Delete/0), arrow key navigation, and `P` to toggle pen/pencil mode |
 
 ---
 
@@ -179,6 +196,10 @@ basic_sudoku/
 | `.cell.conflict` | Rule-violating cells | Red text + red-tinted background (overrides other classes) |
 | `.num-btn` | Number pad buttons | Grid of 9 buttons, hover effect |
 | `.diff-btn` | Difficulty buttons | Bordered buttons with active state |
+| `.pencil-grid` | Mini-grid inside cells | 3×3 CSS grid for displaying candidate digits |
+| `.pencil-grid span` | Each candidate slot | Small font (0.55rem), dim color (#888) |
+| `.pencil-btn` | Pen/Pencil toggle | Red-bordered toggle button |
+| `.pencil-btn.active` | Pencil mode active | Red-filled button indicating pencil mode |
 | `.action-btn` | Undo/Clear/New Game | Bordered buttons with hover fill |
 | `.win-banner` | Win message container | Centered, bordered box; hidden when `.hidden` added |
 | `.hidden` | Any element | `display: none` |
@@ -212,4 +233,3 @@ Runs 20 assert-based tests covering solution validity, uniqueness, clue counts, 
 - Hint system (reveal one correct cell)
 - Save / load game progress (localStorage)
 - Puzzle import / export
-- Pencil marks (candidate notes per cell)
