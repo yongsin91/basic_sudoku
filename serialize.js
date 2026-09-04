@@ -33,6 +33,8 @@ function serializeState(state) {
         selectedCell: state.selectedCell ? { ...state.selectedCell } : null,
         elapsedSeconds: state.elapsedSeconds || 0,
         mistakeCount: state.mistakeCount || 0,
+        hintCount: state.hintCount || 0,
+        hintedCells: [...(state.hintedCells || [])],
     };
 }
 
@@ -65,6 +67,8 @@ function deserializeState(data) {
             selectedCell: data.selectedCell ? { ...data.selectedCell } : null,
             elapsedSeconds: data.elapsedSeconds || 0,
             mistakeCount: data.mistakeCount || 0,
+            hintCount: data.hintCount || 0,
+            hintedCells: new Set(data.hintedCells || []),
         };
     } catch (e) {
         return null;
