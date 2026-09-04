@@ -34,9 +34,11 @@ const PUZZLES = {
 // ---- 3b. Game State -----------------------------------------
 let board = [];          // current 9x9 array of values (0 = empty)
 let originalPuzzle = [];  // snapshot of the starting puzzle
-let moveHistory = [];     // stack of { row, col, prevValue, newValue }
+let moveHistory = [];     // stack of { row, col, prevValue, newValue, pencilSnapshot }
 let selectedCell = null;  // { row, col } or null
 let currentDifficulty = 'easy';
+let pencilMarks = [];     // array of 81 Sets, each containing candidate digits (1-9)
+let pencilMode = false;   // false = pen mode (place numbers), true = pencil mode (toggle candidates)
 
 // ---- 3c. Render Board ---------------------------------------
 const boardEl = document.getElementById('board');
@@ -54,17 +56,28 @@ function renderBoard() {
     boardEl.innerHTML = '';
     for (let row = 0; row < 9; row++) {
         for (let col = 0; col < 9; col++) {
+            const idx = row * 9 + col;
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.dataset.row = row;
             cell.dataset.col = col;
 
-            const val = board[row * 9 + col];
+            const val = board[idx];
             if (val !== 0) {
                 cell.textContent = val;
+            } else if (pencilMarks[idx] && pencilMarks[idx].size > 0) {
+                // Render pencil marks as a 3x3 mini-grid
+                const grid = document.createElement('div');
+                grid.className = 'pencil-grid';
+                for (let n = 1; n <= 9; n++) {
+                    const span = document.createElement('span');
+                    span.textContent = pencilMarks[idx].has(n) ? n : '';
+                    grid.appendChild(span);
+                }
+                cell.appendChild(grid);
             }
 
-            if (originalPuzzle[row * 9 + col] !== 0) {
+            if (originalPuzzle[idx] !== 0) {
                 cell.classList.add('locked');
             } else if (val !== 0) {
                 cell.classList.add('user-input');
@@ -179,15 +192,79 @@ function placeNumber(num) {
     // Can't edit locked cells
     if (originalPuzzle[idx] !== 0) return;
 
+    if (pencilMode) {
+        togglePencilMark(num);
+        return;
+    }
+
     const prevValue = board[idx];
     if (prevValue === num) return; // no change
 
-    // Push to undo stack
-    moveHistory.push({ row, col, prevValue, newValue: num });
+    // Save pencil mark snapshot before placement (for undo restore)
+    const pencilSnapshot = {};
+
+    // Clear pencil marks in this cell (it now has a value)
+    if (pencilMarks[idx].size > 0) {
+        pencilSnapshot[idx] = [...pencilMarks[idx]];
+        pencilMarks[idx].clear();
+    }
+
+    // Auto-clear this digit from pencil marks of peers
+    const peerSnapshot = clearPencilMarksFromPeers(row, col, num);
+    Object.assign(pencilSnapshot, peerSnapshot);
+
+    // Push to undo stack with pencil snapshot
+    moveHistory.push({ row, col, prevValue, newValue: num, pencilSnapshot });
 
     board[idx] = num;
     renderBoard();
     checkWin();
+}
+
+function togglePencilMark(num) {
+    if (!selectedCell) return;
+    const { row, col } = selectedCell;
+    const idx = row * 9 + col;
+
+    // Can't add pencil marks to locked cells or cells with a value
+    if (originalPuzzle[idx] !== 0) return;
+    if (board[idx] !== 0) return;
+
+    if (pencilMarks[idx].has(num)) {
+        pencilMarks[idx].delete(num);
+    } else {
+        pencilMarks[idx].add(num);
+    }
+    renderBoard();
+}
+
+function clearPencilMarksFromPeers(row, col, num) {
+    const snapshot = {};
+    const boxRow = Math.floor(row / 3) * 3;
+    const boxCol = Math.floor(col / 3) * 3;
+
+    const peers = new Set();
+    // Row peers
+    for (let c = 0; c < 9; c++) peers.add(row * 9 + c);
+    // Column peers
+    for (let r = 0; r < 9; r++) peers.add(r * 9 + col);
+    // Box peers
+    for (let r = boxRow; r < boxRow + 3; r++) {
+        for (let c = boxCol; c < boxCol + 3; c++) {
+            peers.add(r * 9 + c);
+        }
+    }
+
+    for (const pIdx of peers) {
+        if (pencilMarks[pIdx] && pencilMarks[pIdx].has(num)) {
+            if (!snapshot[pIdx]) {
+                snapshot[pIdx] = [...pencilMarks[pIdx]];
+            }
+            pencilMarks[pIdx].delete(num);
+        }
+    }
+
+    return snapshot;
 }
 
 function eraseSelected() {
@@ -196,15 +273,30 @@ function eraseSelected() {
     const idx = row * 9 + col;
 
     if (originalPuzzle[idx] !== 0) return;
+
+    if (pencilMode) {
+        // Clear all pencil marks in the selected cell
+        if (pencilMarks[idx].size > 0) {
+            pencilMarks[idx].clear();
+            renderBoard();
+        }
+        return;
+    }
+
     if (board[idx] === 0) return;
 
-    moveHistory.push({ row, col, prevValue: board[idx], newValue: 0 });
+    moveHistory.push({ row, col, prevValue: board[idx], newValue: 0, pencilSnapshot: {} });
     board[idx] = 0;
     renderBoard();
 }
 
 // Keyboard input
 document.addEventListener('keydown', (e) => {
+    if (e.key === 'p' || e.key === 'P') {
+        togglePencilMode();
+        return;
+    }
+
     if (!selectedCell) return;
 
     if (e.key >= '1' && e.key <= '9') {
@@ -241,26 +333,52 @@ document.querySelectorAll('.num-btn').forEach(btn => {
     });
 });
 
-// ---- 3g. Undo ------------------------------------------------
+// ---- 3g. Pencil Mode Toggle ---------------------------------
+const pencilBtn = document.getElementById('btn-pencil');
+
+function togglePencilMode() {
+    pencilMode = !pencilMode;
+    if (pencilMode) {
+        pencilBtn.textContent = '✏️ Pencil';
+        pencilBtn.classList.add('active');
+    } else {
+        pencilBtn.textContent = '🖊️ Pen';
+        pencilBtn.classList.remove('active');
+    }
+}
+
+pencilBtn.addEventListener('click', togglePencilMode);
+
+// ---- 3h. Undo ------------------------------------------------
 document.getElementById('btn-undo').addEventListener('click', () => {
     if (moveHistory.length === 0) return;
     const last = moveHistory.pop();
     board[last.row * 9 + last.col] = last.prevValue;
     selectedCell = { row: last.row, col: last.col };
+
+    // Restore pencil marks from snapshot (if any)
+    if (last.pencilSnapshot) {
+        for (const [idxStr, marks] of Object.entries(last.pencilSnapshot)) {
+            const idx = parseInt(idxStr, 10);
+            pencilMarks[idx] = new Set(marks);
+        }
+    }
+
     renderBoard();
 });
 
-// ---- 3h. Clear -----------------------------------------------
+// ---- 3i. Clear -----------------------------------------------
 document.getElementById('btn-clear').addEventListener('click', () => {
     for (let i = 0; i < 81; i++) {
         if (originalPuzzle[i] !== 0) continue;
         board[i] = 0;
+        pencilMarks[i].clear();
     }
     moveHistory = [];
     renderBoard();
 });
 
-// ---- 3i. Win Detection --------------------------------------
+// ---- 3j. Win Detection --------------------------------------
 const winBanner = document.getElementById('win-banner');
 
 function checkWin() {
@@ -271,7 +389,14 @@ function checkWin() {
     }
 }
 
-// ---- 3j. New Game -------------------------------------------
+// ---- 3k. New Game -------------------------------------------
+function initPencilMarks() {
+    pencilMarks = [];
+    for (let i = 0; i < 81; i++) {
+        pencilMarks.push(new Set());
+    }
+}
+
 function newGame(difficulty) {
     currentDifficulty = difficulty;
 
@@ -292,6 +417,7 @@ function newGame(difficulty) {
     board = [...originalPuzzle];
     moveHistory = [];
     selectedCell = null;
+    initPencilMarks();
     winBanner.classList.add('hidden');
 
     // Update active button styling
