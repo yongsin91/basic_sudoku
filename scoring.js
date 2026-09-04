@@ -7,6 +7,12 @@
 //  persistence via localStorage.
 //
 //  Works in both Node.js (module.exports) and browser (global).
+//  In Node, auto-loads storage.js for the withLocalStorage helper.
+//  In browser, withLocalStorage is available as a global from <script>.
+
+if (typeof require !== 'undefined' && typeof withLocalStorage === 'undefined') {
+    require('./storage.js');
+}
 
 // ---- Constants ----------------------------------------------
 const DIFFICULTY_BASE = {

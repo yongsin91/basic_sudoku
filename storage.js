@@ -28,4 +28,9 @@ function withLocalStorage(fn, fallback) {
 // ---- Exports ------------------------------------------------
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { withLocalStorage };
+    // Also expose as global so other require'd modules (scoring.js)
+    // can use it without an explicit require in their function bodies
+    if (typeof global !== 'undefined') {
+        global.withLocalStorage = withLocalStorage;
+    }
 }
