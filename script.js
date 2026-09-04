@@ -14,14 +14,19 @@ let elapsedSeconds = 0;   // accumulated time for the current game (persisted)
 let mistakeCount = 0;     // number of conflicting placements this game (persisted)
 let timerInterval = null; // setInterval ID for the timer (runtime only)
 let timerRunning = false; // whether the timer is actively ticking (runtime only)
+let hintCount = 0;       // number of hints used this game (persisted)
+let hintedCells = new Set(); // indices of cells revealed via hint (persisted)
 
 // ---- Timer & Display ----------------------------------------
 const timerEl = document.getElementById('timer');
 const mistakesEl = document.getElementById('mistakes');
+const hintsEl = document.getElementById('hints');
+const hintMessageEl = document.getElementById('hint-message');
 
 function tickTimer() {
     updateTimerDisplay();
     updateMistakeDisplay();
+    updateHintDisplay();
     timerInterval = setInterval(() => {
         elapsedSeconds++;
         updateTimerDisplay();
@@ -56,6 +61,10 @@ function updateMistakeDisplay() {
     mistakesEl.textContent = `Mistakes: ${mistakeCount}`;
 }
 
+function updateHintDisplay() {
+    hintsEl.textContent = `Hints: ${hintCount}`;
+}
+
 // ---- 3c. Render Board ---------------------------------------
 const boardEl = document.getElementById('board');
 
@@ -88,6 +97,9 @@ function renderBoard() {
                 cell.classList.add('locked');
             } else if (val !== 0) {
                 cell.classList.add('user-input');
+                if (hintedCells.has(idx)) {
+                    cell.classList.add('hinted');
+                }
             }
 
             cell.addEventListener('click', () => selectCell(row, col));
@@ -207,6 +219,11 @@ function placeNumber(num) {
     const prevValue = board[idx];
     if (prevValue === num) return; // no change
 
+    // If overwriting a hinted cell, remove it from hintedCells
+    if (hintedCells.has(idx)) {
+        hintedCells.delete(idx);
+    }
+
     // Save pencil mark snapshot before placement (for undo restore)
     const pencilSnapshot = {};
 
@@ -308,10 +325,95 @@ function eraseSelected() {
     saveGame();
 }
 
-// Keyboard input
+// ---- Hint System --------------------------------------------
+function giveHint() {
+    // Don't hint if the board is already complete
+    if (isBoardComplete()) return;
+
+    // Check for conflicts — can't solve a contradictory board
+    for (let i = 0; i < 81; i++) {
+        if (board[i] === 0) continue;
+        const row = Math.floor(i / 9);
+        const col = i % 9;
+        if (hasConflict(row, col, board[i])) {
+            // Show conflict message briefly
+            hintMessageEl.classList.remove('hidden');
+            setTimeout(() => hintMessageEl.classList.add('hidden'), 2000);
+            return;
+        }
+    }
+
+    // Determine target cell: selected if empty, else random empty cell
+    let targetIdx = -1;
+    if (selectedCell) {
+        const idx = selectedCell.row * 9 + selectedCell.col;
+        if (board[idx] === 0 && originalPuzzle[idx] === 0) {
+            targetIdx = idx;
+        }
+    }
+
+    if (targetIdx === -1) {
+        // Collect all empty, non-locked cells
+        const emptyCells = [];
+        for (let i = 0; i < 81; i++) {
+            if (board[i] === 0 && originalPuzzle[i] === 0) {
+                emptyCells.push(i);
+            }
+        }
+        if (emptyCells.length === 0) return;
+        targetIdx = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    }
+
+    // Solve the current board to find the correct value
+    const solution = solveBoard(board);
+    if (!solution) return;
+
+    const correctValue = solution[targetIdx];
+    const row = Math.floor(targetIdx / 9);
+    const col = targetIdx % 9;
+
+    // Save pencil mark snapshot before placement (for undo restore)
+    const pencilSnapshot = {};
+    if (pencilMarks[targetIdx].size > 0) {
+        pencilSnapshot[targetIdx] = [...pencilMarks[targetIdx]];
+        pencilMarks[targetIdx].clear();
+    }
+
+    // Auto-clear this digit from pencil marks of peers
+    const peerSnapshot = clearPencilMarksFromPeers(row, col, correctValue);
+    Object.assign(pencilSnapshot, peerSnapshot);
+
+    // Push to undo stack with hinted flag
+    moveHistory.push({
+        row, col,
+        prevValue: board[targetIdx],
+        newValue: correctValue,
+        pencilSnapshot,
+        hinted: true,
+    });
+
+    board[targetIdx] = correctValue;
+    hintedCells.add(targetIdx);
+    hintCount++;
+    updateHintDisplay();
+
+    selectedCell = { row, col };
+    renderBoard();
+    checkWin();
+    saveGame();
+}
+
+document.getElementById('btn-hint').addEventListener('click', giveHint);
+
+// ---- Keyboard input -----------------------------------------
 document.addEventListener('keydown', (e) => {
     if (e.key === 'p' || e.key === 'P') {
         togglePencilMode();
+        return;
+    }
+
+    if (e.key === 'h' || e.key === 'H') {
+        giveHint();
         return;
     }
 
@@ -375,6 +477,12 @@ document.getElementById('btn-undo').addEventListener('click', () => {
     board[last.row * 9 + last.col] = last.prevValue;
     selectedCell = { row: last.row, col: last.col };
 
+    // If undoing a hint, remove the cell from hintedCells
+    if (last.hinted) {
+        const idx = last.row * 9 + last.col;
+        hintedCells.delete(idx);
+    }
+
     // Restore pencil marks from snapshot (if any)
     if (last.pencilSnapshot) {
         for (const [idxStr, marks] of Object.entries(last.pencilSnapshot)) {
@@ -415,7 +523,14 @@ function checkWin() {
         document.getElementById('win-score').textContent = result.final;
         document.getElementById('win-best').textContent = best;
 
-        // Show "New Best!" badge if applicable
+        // Show hint count in the mistakes row label
+        const mistakesLabel = document.querySelector('.win-stat-row:nth-child(2) .win-stat-label');
+        if (hintCount > 0) {
+            mistakesLabel.textContent = `Mistakes (${mistakeCount}) · Hints (${hintCount})`;
+        } else {
+            mistakesLabel.textContent = 'Mistakes';
+        }
+
         const bestLabel = document.querySelector('.win-best-row .win-stat-label');
         if (isNewBest) {
             bestLabel.textContent = 'Best 🏆 New!';
@@ -448,6 +563,8 @@ function newGame(difficulty) {
     selectedCell = null;
     initPencilMarks();
     mistakeCount = 0;
+    hintCount = 0;
+    hintedCells = new Set();
     winBanner.classList.add('hidden');
 
     // Update active button styling
@@ -492,6 +609,8 @@ function saveGame() {
             selectedCell,
             elapsedSeconds,
             mistakeCount,
+            hintCount,
+            hintedCells: [...hintedCells],
         };
         localStorage.setItem(SAVE_KEY, JSON.stringify(serializeState(state)));
     }, undefined);
@@ -520,6 +639,9 @@ function loadGame() {
         selectedCell = restored.selectedCell;
         elapsedSeconds = restored.elapsedSeconds || 0;
         mistakeCount = restored.mistakeCount || 0;
+        hintCount = restored.hintCount || 0;
+        hintedCells = new Set(restored.hintedCells || []);
+        updateHintDisplay();
 
         // Sync pencil mode button UI with restored state
         if (pencilMode) {
