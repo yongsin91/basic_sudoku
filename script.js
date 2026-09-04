@@ -405,7 +405,7 @@ const winBanner = document.getElementById('win-banner');
 function checkWin() {
     if (isBoardComplete()) {
         stopTimer();
-        const result = computeScore(currentDifficulty, elapsedSeconds, mistakeCount);
+        const result = computeScore(currentDifficulty, elapsedSeconds, mistakeCount, hintCount);
         const isNewBest = saveBestScore(currentDifficulty, result.final);
         const best = getBestScore(currentDifficulty);
 
