@@ -13,30 +13,31 @@ let pencilMode = false;   // false = pen mode (place numbers), true = pencil mod
 let elapsedSeconds = 0;   // accumulated time for the current game (persisted)
 let mistakeCount = 0;     // number of conflicting placements this game (persisted)
 let timerInterval = null; // setInterval ID for the timer (runtime only)
+let timerRunning = false; // whether the timer is actively ticking (runtime only)
 
 // ---- Timer & Display ----------------------------------------
 const timerEl = document.getElementById('timer');
 const mistakesEl = document.getElementById('mistakes');
 
-function startTimer() {
-    stopTimer();
-    elapsedSeconds = 0;
+function tickTimer() {
     updateTimerDisplay();
     updateMistakeDisplay();
     timerInterval = setInterval(() => {
         elapsedSeconds++;
         updateTimerDisplay();
     }, 1000);
+    timerRunning = true;
+}
+
+function startTimer() {
+    stopTimer();
+    elapsedSeconds = 0;
+    tickTimer();
 }
 
 function resumeTimer() {
     stopTimer();
-    updateTimerDisplay();
-    updateMistakeDisplay();
-    timerInterval = setInterval(() => {
-        elapsedSeconds++;
-        updateTimerDisplay();
-    }, 1000);
+    tickTimer();
 }
 
 function stopTimer() {
@@ -44,6 +45,7 @@ function stopTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
     }
+    timerRunning = false;
 }
 
 function updateTimerDisplay() {
