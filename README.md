@@ -2,13 +2,14 @@
 
 ## Version
 
+**v1.1.0** — Adds random puzzle generation (2026-09-03)
 **v1.0.0** — Initial release (2026-08-31)
 
 ---
 
 ## Overview
 
-A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step — just open and play. Features three difficulty levels, real-time conflict detection, full undo history, and a responsive layout that works on desktop and mobile.
+A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step — just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, full undo history, and a responsive layout that works on desktop and mobile.
 
 ---
 
@@ -27,10 +28,15 @@ A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No fra
 
 ```
 basic_sudoku/
-├── index.html      # Page structure & DOM elements
-├── style.css       # All styling, responsive layout
-├── script.js       # Game logic, puzzle data, event handling
-└── README.md       # This documentation
+├── index.html                  # Page structure & DOM elements
+├── style.css                   # All styling, responsive layout
+├── script.js                   # Game logic, puzzle data, event handling
+├── generator.js                # Puzzle generator (backtracking + MRV solver)
+├── package.json                # npm metadata & test script
+├── test/
+│   └── generator.test.js       # 20 assert-based tests for generator.js
+├── PLAN-random-puzzle-generation.md  # Design notes for the generator
+└── README.md                   # This documentation
 ```
 
 ---
@@ -40,8 +46,10 @@ basic_sudoku/
 ### Core Gameplay
 - **9×9 Sudoku grid** with standard rules (row, column, 3×3 box uniqueness)
 - **3 difficulty levels** — Easy, Medium, Hard (selected via buttons)
-- **15 pre-made puzzles** — 5 per difficulty level, stored inline as 81-char strings
-- **Random puzzle selection** — each new game picks a random puzzle from the chosen difficulty
+- **Algorithmic random puzzle generation** — each new game generates a unique puzzle on-the-fly using a backtracking solver with bitmask constraints and the MRV (minimum remaining values) heuristic
+- **Unique-solution guarantee** — cells are removed only if the puzzle retains a single solution
+- **Static puzzle fallback** — 15 pre-made puzzles (5 per difficulty) remain in `script.js` as a safety net if the generator fails
+- **Difficulty-scaled clue counts** — Easy (40–45 clues), Medium (32–36), Hard (25–30)
 
 ### Input Methods
 - **Keyboard input** — Press 1–9 to place a number in the selected cell
@@ -67,6 +75,22 @@ basic_sudoku/
 ### Responsive Design
 - **Desktop** — Fixed 450×450px board with full-size number pad
 - **Mobile/tablet** — Board and number pad scale to 90vw, font sizes reduce for smaller screens
+
+---
+
+## Functions Reference (`generator.js`)
+
+| Function | Description |
+|---|---|
+| `bit(d)` | Returns `1 << d` — bitmask for digit `d` |
+| `buildMasks(board)` | Builds row/column/box constraint bitmasks from the current board |
+| `isValid(board, row, col, val)` | Checks if `val` can be legally placed at `(row, col)` |
+| `generateFullSolution()` | Generates a complete, valid 9×9 solution using randomized backtracking with MRV |
+| `countSolutions(board, limit)` | Counts solutions up to `limit` (default 2); returns 0, 1, or `limit` |
+| `createPuzzle(solution, targetClues)` | Removes cells from a full solution while maintaining a unique solution |
+| `getTargetClueCount(difficulty)` | Returns a random clue count within the difficulty's range |
+| `generatePuzzle(difficulty)` | Orchestrator: generates a complete puzzle for the given difficulty |
+| `shuffle(arr)` | Fisher-Yates shuffle (used for randomization) |
 
 ---
 
@@ -118,7 +142,7 @@ basic_sudoku/
 
 | Function | Description |
 |---|---|
-| `newGame(difficulty)` | Picks a random puzzle from the given difficulty, resets all state, re-renders the board, updates active button styling |
+| `newGame(difficulty)` | Generates a random puzzle (via `generatePuzzle()` with static fallback), resets all state, re-renders the board, updates active button styling |
 
 ### Event Listeners
 
@@ -165,11 +189,19 @@ basic_sudoku/
    ```
    Then visit `http://localhost:8765/index.html`
 
+### Run Tests
+
+```bash
+cd basic_sudoku
+npm test
+```
+Runs 20 assert-based tests covering solution validity, uniqueness, clue counts, and performance (no external dependencies — uses Node's built-in `assert` module).
+
 ---
 
 ## Future Enhancements (Not Yet Implemented)
 
-- Random puzzle generation (algorithmic, no pre-made set)
+- **Deploy to GitHub Pages** — The game is fully static (HTML/CSS/JS, no build step, no server-side dependencies) and is ready to be hosted on GitHub Pages. Enabling it would make the game accessible at `https://yongsin91.github.io/basic_sudoku/` with zero code changes needed.
 - Timer / scoring system
 - Hint system (reveal one correct cell)
 - Save / load game progress (localStorage)
