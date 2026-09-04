@@ -3,9 +3,13 @@
 ## Version
 
 **v1.3.0** — Adds save/load game progress via localStorage (2026-09-05)
+
 **v1.2.1** — Remove hardcoded puzzle fallback, generator is sole source (2026-09-04)
+
 **v1.2.0** — Adds pencil marks (candidate notes) (2026-09-04)
+
 **v1.1.0** — Adds random puzzle generation (2026-09-03)
+
 **v1.0.0** — Initial release (2026-08-31)
 
 ---
