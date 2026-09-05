@@ -138,9 +138,12 @@ basic_sudoku/
 - **Auto-detection** — Game detects completion when all 81 cells are filled with no conflicts
 - **Win overlay** — Styled modal “🎉 You solved it!” overlay centered on screen with a dimmed backdrop, showing time, mistakes, final score, and best score, with a “New Game” button (no browser alerts, no scrolling needed)
 
-### Responsive Design
-- **Desktop** - Fixed 450×450px board with full-size number pad
-- **Mobile/tablet** - Board and number pad scale to 90vw, font sizes reduce for smaller screens
+### Responsive Design — Fit-to-Viewport (No Scrolling)
+- **Viewport-height sizing** — Board size is `min(450px, 92vw, 100dvh − 310px)`, so it scales to fit both width and height of any screen — laptop, desktop, iPad, or mobile — with zero scrolling
+- **`overflow: hidden`** on body hard-prevents scrolling; `100dvh` (dynamic viewport height) adapts to mobile browser UI
+- **`clamp()` scaling** — Gaps (6–16px), body padding (8–20px), button fonts, and cell fonts all scale with viewport height, shrinking on shorter screens to maximize board space
+- **Proportional cell fonts** — Cell and pencil mark font sizes are `calc(var(--board-size) / N)`, so text stays in proportion as the board grows or shrinks
+- **Board, number pad, and status bar** all share the same `--board-size` width, keeping the layout aligned at any size
 
 ---
 
