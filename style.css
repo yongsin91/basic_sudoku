@@ -139,7 +139,7 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 450px;
+    width: var(--board-size);
     padding: 0 4px;
 }
 
@@ -186,8 +186,8 @@ h1 {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
     grid-template-rows: repeat(9, 1fr);
-    width: 450px;
-    height: 450px;
+    width: var(--board-size);
+    height: var(--board-size);
     border: 3px solid var(--color-accent);
     border-radius: 4px;
     background: var(--bg-board);
@@ -273,8 +273,8 @@ h1 {
 .number-pad {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
-    gap: 6px;
-    width: 450px;
+    gap: clamp(2px, 1vh, 6px);
+    width: var(--board-size);
 }
 
 .num-btn {
