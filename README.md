@@ -2,6 +2,8 @@
 
 ## Version
 
+**v1.6.0** — Adds color theme system with 4 selectable themes (2026-09-05)
+
 **v1.5.0** — Adds hint system with scoring penalty (2026-09-05)
 
 **v1.4.0** — Adds timer & scoring system with best score persistence (2026-09-05)
@@ -20,7 +22,7 @@
 
 ## Overview
 
-A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step - just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, pencil marks (candidate notes), full undo history, automatic save/load via localStorage, a live timer and scoring system with best-score persistence, a hint system that reveals correct cell values, and a responsive layout that works on desktop and mobile.
+A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step - just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, pencil marks (candidate notes), full undo history, automatic save/load via localStorage, a live timer and scoring system with best-score persistence, a hint system that reveals correct cell values, four selectable color themes, and a responsive layout that works on desktop and mobile.
 
 ### 🎮 Play Now
 
@@ -62,6 +64,7 @@ basic_sudoku/
 ├── PLAN-save-load.md                # Design notes for save/load feature
 ├── PLAN-scoring-system.md           # Design notes for timer & scoring
 ├── PLAN-hint-system.md              # Design notes for hint system
+├── PLAN-color-themes.md             # Design notes for color themes
 └── README.md                   # This documentation
 ```
 
@@ -123,6 +126,13 @@ basic_sudoku/
 - **Undoable** — Hint placements can be undone like any other move
 - **Hint counter** — Displayed in the status bar and in the win banner
 - **Persists across sessions** — Hint count and hinted cells are saved/restored via the save/load system
+
+### Color Themes
+- **4 selectable themes** — Midnight (default dark), Light (high-contrast daytime), Forest (dark green), Ocean (dark teal)
+- **Instant switching** — Select from the dropdown above the difficulty buttons; the theme applies immediately without reloading the page
+- **CSS custom properties** — All colors are defined as semantic CSS variables on `:root`, overridden per-theme via `[data-theme]` attribute on `<body>`
+- **Persistent preference** — The selected theme is saved to `localStorage['sudoku-theme']` (separate from game save) and restored on next visit
+- **Graceful fallback** — If localStorage is unavailable or the saved theme is invalid, defaults to Midnight
 
 ### Win State
 - **Auto-detection** — Game detects completion when all 81 cells are filled with no conflicts
@@ -243,6 +253,14 @@ basic_sudoku/
 | `giveHint()` | Finds an empty cell, solves the board, places the correct value, marks it as hinted, pushes to undo, increments hint counter |
 | `updateHintDisplay()` | Updates the `#hints` element text with current hint count |
 
+### Theme System
+
+| Function | Description |
+|---|---|
+| `applyTheme(themeName)` | Sets `data-theme` attribute on `<body>`, syncs the select dropdown |
+| `getSavedTheme()` | Reads theme from `localStorage`, validates against known themes, defaults to `'midnight'` |
+| `saveTheme(themeName)` | Writes theme name to `localStorage` |
+
 ### Validation
 
 | Function | Description |
@@ -287,6 +305,8 @@ basic_sudoku/
 
 | Class | Element | Description |
 |---|---|---|
+| `.theme-bar` | Theme selector container | Centered row above difficulty buttons |
+| `#theme-select` | Theme dropdown | Themed select element, hover/focus uses accent color |
 | `.status-bar` | Timer + mistakes row | Flex row between difficulty buttons and board |
 | `.timer` | Timer span | Bold green (#4ecca3), tabular-nums |
 | `.mistakes` | Mistakes span | Subtle gray (#888) |
