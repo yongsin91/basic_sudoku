@@ -13,7 +13,7 @@
  *
  * @param {Object} state - { originalPuzzle, board, pencilMarks,
  *   moveHistory, currentDifficulty, pencilMode, selectedCell,
- *   elapsedSeconds, mistakeCount }
+ *   elapsedSeconds, mistakeCount, hintCount, hintedCells }
  * @returns {Object} JSON-safe plain object
  */
 function serializeState(state) {
