@@ -2,6 +2,10 @@
 
 ## Version
 
+**v1.7.0** — Architecture review, README sync, JSDoc fix (2026-09-06)
+
+**v1.6.1** — Fix highlight/selected cell colors, clear selection on outside click (2026-09-06)
+
 **v1.6.0** — Adds color theme system with 4 selectable themes (2026-09-05)
 
 **v1.5.0** — Adds hint system with scoring penalty (2026-09-05)
@@ -10,19 +14,19 @@
 
 **v1.3.0** — Adds save/load game progress via localStorage (2026-09-05)
 
-**v1.2.1** - Remove hardcoded puzzle fallback, generator is sole source (2026-09-04)
+**v1.2.1** — Remove hardcoded puzzle fallback, generator is sole source (2026-09-04)
 
-**v1.2.0** - Adds pencil marks (candidate notes) (2026-09-04)
+**v1.2.0** — Adds pencil marks (candidate notes) (2026-09-04)
 
-**v1.1.0** - Adds random puzzle generation (2026-09-03)
+**v1.1.0** — Adds random puzzle generation (2026-09-03)
 
-**v1.0.0** - Initial release (2026-08-31)
+**v1.0.0** — Initial release (2026-08-31)
 
 ---
 
 ## Overview
 
-A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step - just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, pencil marks (candidate notes), full undo history, automatic save/load via localStorage, a live timer and scoring system with best-score persistence, a hint system that reveals correct cell values, four selectable color themes, and a responsive layout that works on desktop and mobile.
+A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step, no dependencies — just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, pencil marks (candidate notes), full undo history, automatic save/load via localStorage, a live timer and scoring system with best-score persistence, a hint system that reveals correct cell values, four selectable color themes, a win overlay modal, and a responsive no-scroll fit-to-viewport layout that works on desktop, laptop, iPad, and mobile.
 
 ### 🎮 Play Now
 
@@ -37,9 +41,33 @@ No installation required - just click and start solving!
 | Layer | Technology |
 |---|---|
 | Markup | HTML5 |
-| Styling | CSS3 (CSS Grid, media queries) |
+| Styling | CSS3 (CSS Grid, custom properties, `clamp()`, `dvh` units, media queries) |
 | Logic | Vanilla JavaScript (ES6) |
 | Dependencies | None |
+
+---
+
+## Architecture
+
+The codebase follows a clean layered architecture where pure logic modules are separated from DOM-coupled code, enabling unit testing in Node.js without a browser:
+
+```
+Pure logic modules (no DOM, no globals, testable in Node):
+  generator.js  — puzzle generation, solving, validation (29 tests)
+  serialize.js  — state serialization: Sets ↔ arrays (21 tests)
+  scoring.js    — score computation, time formatting, best scores (35 tests)
+  storage.js    — shared localStorage safe-access helper
+
+Orchestrator (DOM + localStorage + game state):
+  script.js     — wires pure modules into the DOM, manages all game state,
+                   handles keyboard/mouse input, timer, themes, save/load
+
+Presentation:
+  index.html    — page structure & DOM elements
+  style.css     — all styling, 4 color themes, responsive fit-to-viewport layout
+```
+
+All pure modules use a dual-environment pattern: loaded via `<script>` in the browser (globals) and via `require()` in Node tests (`module.exports`).
 
 ---
 
@@ -48,8 +76,8 @@ No installation required - just click and start solving!
 ```
 basic_sudoku/
 ├── index.html                  # Page structure & DOM elements
-├── style.css                   # All styling, responsive layout
-├── script.js                   # Game logic, event handling, pencil marks, save/load, timer/scoring
+├── style.css                   # All styling, themes, responsive layout
+├── script.js                   # Game logic, event handling, save/load, timer, hints, themes
 ├── serialize.js                # Pure state serialization (Sets ↔ arrays)
 ├── scoring.js                  # Pure score computation, time formatting, best scores
 ├── storage.js                  # Shared localStorage safe-access helper
@@ -59,12 +87,20 @@ basic_sudoku/
 │   ├── generator.test.js       # 29 assert-based tests for generator.js
 │   ├── save-load.test.js       # 21 assert-based tests for serialize.js
 │   └── scoring.test.js         # 35 assert-based tests for scoring.js
-├── PLAN-random-puzzle-generation.md  # Design notes for the generator
-├── PLAN-pencil-marks.md             # Design notes for pencil marks
-├── PLAN-save-load.md                # Design notes for save/load feature
-├── PLAN-scoring-system.md           # Design notes for timer & scoring
-├── PLAN-hint-system.md              # Design notes for hint system
-├── PLAN-color-themes.md             # Design notes for color themes
+├── plan/                       # Design documents for all features and fixes
+│   ├── PLAN-random-puzzle-generation.md
+│   ├── PLAN-pencil-marks.md
+│   ├── PLAN-save-load.md
+│   ├── PLAN-scoring-system.md
+│   ├── PLAN-hint-system.md
+│   ├── PLAN-color-themes.md
+│   ├── PLAN-win-overlay-compact-layout.md
+│   ├── PLAN-no-scroll-fit-viewport.md
+│   ├── PLAN-mobile-spacing-min-size.md
+│   ├── PLAN-fix-browser-layout.md
+│   ├── PLAN-fix-selected-cell-color.md
+│   ├── PLAN-fix-highlight-selected-colors.md
+│   └── PLAN-architecture-review.md
 └── README.md                   # This documentation
 ```
 
@@ -85,12 +121,15 @@ basic_sudoku/
 - **Erase** - Backspace, Delete, or 0 key removes the selected cell's value
 - **Arrow keys** - Navigate between cells without clicking
 - **Pen / Pencil toggle** - Press `P` or click the toggle button to switch between placing numbers and toggling candidate notes
+- **Hint** - Press `H` or click the 💡 Hint button to reveal a correct value
+- **Click outside board** - Clicking anywhere outside the board clears the current selection and highlights
 
 ### Visual Aids
 - **Row / column / box highlighting** - Selecting a cell highlights its entire row, column, and 3×3 box with a subtle but clearly visible tint — distinct from both empty cells and the selected cell
 - **Selected cell indicator** - Active cell gets a clearly distinct, brighter background color — the brightest of three visual levels (empty → highlight → selected), making it easy to identify which cell is selected
 - **Conflict highlighting** - Cells that violate Sudoku rules (duplicate in row/column/box) turn red in real-time
 - **Locked cell styling** - Pre-filled puzzle cells are visually distinct (bold, darker background) and cannot be edited
+- **Hinted cell styling** - Cells revealed via hints are shown in blue, distinct from user-input (green) and locked (gray)
 
 ### Pencil Marks (Candidate Notes)
 - **Pen / Pencil mode toggle** - Switch between placing numbers (pen) and toggling candidate notes (pencil) via the button or `P` key
@@ -102,10 +141,11 @@ basic_sudoku/
 ### Game Controls
 - **Undo** - Full move history; undo step-by-step back to the original puzzle state (restores pencil marks too)
 - **Clear** - Wipes all user-entered values and pencil marks, restoring the original puzzle in one action
-- **New Game** - Starts a new puzzle at the current difficulty (also accessible via the win banner)
+- **Hint** - Reveals the correct value for one empty cell (selected cell if empty, otherwise random)
+- **New Game** - Starts a new puzzle at the current difficulty (also accessible via the win overlay)
 
 ### Save / Load Game Progress
-- **Automatic save** - The full game state (board, pencil marks, undo history, difficulty, pen/pencil mode, cell selection) is saved to `localStorage` after every move - no manual save button needed
+- **Automatic save** - The full game state (board, pencil marks, undo history, difficulty, pen/pencil mode, cell selection, timer, mistakes, hints) is saved to `localStorage` after every move - no manual save button needed
 - **Automatic load** - On page load, the saved game is restored automatically; if no save exists (or it's corrupted), a fresh game starts
 - **Persists across sessions** - Saved data survives browser restarts, machine reboots, and tab closures; it remains until the puzzle is solved or the browser's site data is cleared
 - **Clears on win** - When the puzzle is solved, the save is removed so the next visit starts a fresh game
@@ -114,29 +154,28 @@ basic_sudoku/
 ### Timer & Scoring System
 - **Live timer** — Counts elapsed time from when a new game starts until the puzzle is solved, displayed in MM:SS format above the board
 - **Mistake counter** — Tracks each time a player places a number that creates a conflict; displayed alongside the timer
-- **Scoring formula** — Final score is computed from difficulty base (Easy: 1000, Medium: 2000, Hard: 3000) minus time penalty (1 pt/sec, capped at 50% of base) minus mistake penalty (30 pts/mistake, capped at 50% of base), with a minimum of 10% of base
-- **Best score persistence** — The highest score per difficulty is saved to `localStorage` and displayed in the win banner; a “🏆 New!” badge appears when a new best is achieved
+- **Hint counter** — Tracks number of hints used; displayed alongside mistakes
+- **Scoring formula** — Final score is computed from difficulty base (Easy: 1000, Medium: 2000, Hard: 3000) minus time penalty (1 pt/sec, capped at 50% of base) minus mistake penalty (30 pts/mistake, capped at 50% of base) minus hint penalty (50 pts/hint, capped at 50% of base), with a minimum of 10% of base
+- **Best score persistence** — The highest score per difficulty is saved to `localStorage` and displayed in the win overlay; a "🏆 New!" badge appears when a new best is achieved
 - **Timer persists across sessions** — Elapsed time is saved/restored via the save/load system, so the timer resumes correctly after a browser restart
 
 ### Hint System
 - **On-demand hints** — Click the 💡 Hint button or press `H` to reveal the correct value for one empty cell; if a cell is selected and empty, that cell is hinted, otherwise a random empty cell is chosen
-- **Conflict guard** — Hints are disabled when the board has conflicting placements; a “Fix conflicts first” message appears briefly
-- **Hinted cell styling** — Cells revealed via hints are shown in blue (`#5dade2`), distinct from user-input (green) and locked (gray) cells
+- **Conflict guard** — Hints are disabled when the board has conflicting placements; a "Fix conflicts first" message appears briefly
 - **Hint penalty** — Each hint adds a 50-point penalty to the final score (capped at 50% of base), encouraging players to solve independently
 - **Undoable** — Hint placements can be undone like any other move
-- **Hint counter** — Displayed in the status bar and in the win banner
 - **Persists across sessions** — Hint count and hinted cells are saved/restored via the save/load system
 
 ### Color Themes
 - **4 selectable themes** — Midnight (default dark), Light (high-contrast daytime), Forest (dark green), Ocean (dark teal)
-- **Instant switching** — Select from the dropdown above the difficulty buttons; the theme applies immediately without reloading the page
+- **Instant switching** — Select from the dropdown in the controls row; the theme applies immediately without reloading the page
 - **CSS custom properties** — All colors are defined as semantic CSS variables on `:root`, overridden per-theme via `[data-theme]` attribute on `<body>`
 - **Persistent preference** — The selected theme is saved to `localStorage['sudoku-theme']` (separate from game save) and restored on next visit
 - **Graceful fallback** — If localStorage is unavailable or the saved theme is invalid, defaults to Midnight
 
 ### Win State
 - **Auto-detection** — Game detects completion when all 81 cells are filled with no conflicts
-- **Win overlay** — Styled modal “🎉 You solved it!” overlay centered on screen with a dimmed backdrop, showing time, mistakes, final score, and best score, with a “New Game” button (no browser alerts, no scrolling needed)
+- **Win overlay** — Styled modal "🎉 You solved it!" overlay centered on screen with a dimmed backdrop, showing time, mistakes, hints, final score, and best score, with a "New Game" button (no browser alerts, no scrolling needed)
 
 ### Responsive Design — Fit-to-Viewport (No Scrolling)
 - **Viewport-height sizing** — Board size is `max(240px, min(450px, 92vw, 100dvh − 310px))`, so it scales to fit both width and height of any screen — laptop, desktop, iPad, or mobile — with zero scrolling on normal screens
@@ -150,6 +189,64 @@ basic_sudoku/
 - **Proportional cell fonts** — Cell and pencil mark font sizes are `calc(var(--board-size) / N)`, so text stays in proportion as the board grows or shrinks
 - **Board, number pad, status bar, controls, and action buttons** all share the same `--board-size` width, keeping the layout aligned at any size
 - **Proportional button padding** — Button horizontal padding is `calc(var(--board-size) * N)`, so it shrinks proportionally with the board. On desktop, buttons stay on one row (`flex-wrap: nowrap`); on mobile (≤520px), wrapping is allowed (`flex-wrap: wrap`) to prevent edge-touching
+
+---
+
+## CSS Variables Reference (`style.css`)
+
+### Theme Variables (defined per theme via `[data-theme]`)
+
+| Variable | Purpose |
+|---|---|
+| `--bg-page` | Page background |
+| `--color-text` | Main text color |
+| `--color-text-dim` | Dimmed text (labels, counters, pencil marks) |
+| `--color-accent` | Primary accent (h1, difficulty buttons, board border, pencil button, conflict text, best score) |
+| `--color-secondary` | Secondary accent (action buttons, timer, user-input text, win text, score) |
+| `--color-hint` | Hint color (hinted cells, hint button) |
+| `--bg-board` | Board background, number pad button background, win banner background |
+| `--bg-cell-locked` | Locked cell background |
+| `--color-cell-locked` | Locked cell text color |
+| `--bg-cell-selected` | Selected cell background (brightest of three levels) |
+| `--bg-cell-highlight` | Highlighted cell background (subtle tint, between empty and selected) |
+| `--color-cell-border` | Cell border, number pad button border |
+| `--bg-conflict` | Conflict cell background |
+
+### Viewport-Fit Variables (defined on `:root`)
+
+| Variable | Formula | Purpose |
+|---|---|---|
+| `--board-max` | `450px` | Maximum board size |
+| `--board-min` | `240px` | Minimum playable board size |
+| `--board-size` | `max(--board-min, min(--board-max, 92vw, 100dvh − 310px))` | Actual board size (constrained by width, height, and min/max) |
+| `--gap` | `clamp(6px, 2vh, 16px)` | Gap between UI elements in the container |
+| `--pad` | `clamp(8px, 2vh, 20px)` | Body padding |
+
+---
+
+## Functions Reference (`generator.js`)
+
+| Function | Description |
+|---|---|
+| `bit(d)` | Returns `1 << d` - bitmask for digit `d` |
+| `buildMasks(board)` | Builds row/column/box constraint bitmasks from the current board |
+| `isValid(board, row, col, val)` | Checks if `val` can be legally placed at `(row, col)` |
+| `generateFullSolution()` | Generates a complete, valid 9×9 solution using randomized backtracking with MRV |
+| `countSolutions(board, limit)` | Counts solutions up to `limit` (default 2); returns 0, 1, or `limit` |
+| `solveBoard(board)` | Solves a board and returns the full 81-cell solution, or `null` if no solution exists (conflicts or unsolvable) |
+| `createPuzzle(solution, targetClues)` | Removes cells from a full solution while maintaining a unique solution |
+| `getTargetClueCount(difficulty)` | Returns a random clue count within the difficulty's range |
+| `generatePuzzle(difficulty)` | Orchestrator: generates a complete puzzle for the given difficulty |
+| `shuffle(arr)` | Fisher-Yates shuffle (used for randomization) |
+
+---
+
+## Functions Reference (`serialize.js`)
+
+| Function | Description |
+|---|---|
+| `serializeState(state)` | Converts a game state object (with `Set` arrays) into a plain JSON-serializable object |
+| `deserializeState(data)` | Converts a plain serialized object back into a game state object (reconstructs `Set`s from arrays); returns `null` on invalid input |
 
 ---
 
@@ -173,32 +270,6 @@ basic_sudoku/
 
 ---
 
-## Functions Reference (`serialize.js`)
-
-| Function | Description |
-|---|---|
-| `serializeState(state)` | Converts a game state object (with `Set` arrays) into a plain JSON-serializable object |
-| `deserializeState(data)` | Converts a plain serialized object back into a game state object (reconstructs `Set`s from arrays); returns `null` on invalid input |
-
----
-
-## Functions Reference (`generator.js`)
-
-| Function | Description |
-|---|---|
-| `bit(d)` | Returns `1 << d` - bitmask for digit `d` |
-| `buildMasks(board)` | Builds row/column/box constraint bitmasks from the current board |
-| `isValid(board, row, col, val)` | Checks if `val` can be legally placed at `(row, col)` |
-| `generateFullSolution()` | Generates a complete, valid 9×9 solution using randomized backtracking with MRV |
-| `countSolutions(board, limit)` | Counts solutions up to `limit` (default 2); returns 0, 1, or `limit` |
-| `solveBoard(board)` | Solves a board and returns the full 81-cell solution, or `null` if no solution exists (conflicts or unsolvable) |
-| `createPuzzle(solution, targetClues)` | Removes cells from a full solution while maintaining a unique solution |
-| `getTargetClueCount(difficulty)` | Returns a random clue count within the difficulty's range |
-| `generatePuzzle(difficulty)` | Orchestrator: generates a complete puzzle for the given difficulty |
-| `shuffle(arr)` | Fisher-Yates shuffle (used for randomization) |
-
----
-
 ## Functions Reference (`script.js`)
 
 ### Game State
@@ -207,7 +278,7 @@ basic_sudoku/
 |---|---|
 | `board` | Array of 81 integers representing the current board state (0 = empty) |
 | `originalPuzzle` | Snapshot of the starting puzzle; used to identify locked cells |
-| `moveHistory` | Stack of `{ row, col, prevValue, newValue, pencilSnapshot }` objects for undo support |
+| `moveHistory` | Stack of `{ row, col, prevValue, newValue, pencilSnapshot, hinted? }` objects for undo support |
 | `selectedCell` | `{ row, col }` of the currently selected cell, or `null` |
 | `currentDifficulty` | String tracking the active difficulty (`'easy'`, `'medium'`, `'hard'`) |
 | `pencilMarks` | Array of 81 `Set` objects, each containing candidate digits (1-9) for that cell |
@@ -224,8 +295,8 @@ basic_sudoku/
 
 | Function | Description |
 |---|---|
-| `renderBoard()` | Clears and rebuilds the 9×9 grid DOM, populates values, renders pencil mark mini-grids, marks locked/user-input cells, applies highlights |
-| `applyHighlights()` | Highlights the selected cell's row, column, and 3×3 box; calls conflict highlighting |
+| `renderBoard()` | Clears and rebuilds the 9×9 grid DOM, populates values, renders pencil mark mini-grids, marks locked/user-input/hinted cells, applies highlights |
+| `applyHighlights()` | Highlights the selected cell's row, column, and 3×3 box; selected cell gets `.selected` class, peers get `.highlight`; calls conflict highlighting |
 
 ### Selection & Navigation
 
@@ -238,7 +309,7 @@ basic_sudoku/
 
 | Function | Description |
 |---|---|
-| `placeNumber(num)` | In pen mode: places a number, auto-clears peer pencil marks, pushes to undo stack. In pencil mode: delegates to `togglePencilMark()` |
+| `placeNumber(num)` | In pen mode: places a number, auto-clears peer pencil marks, pushes to undo stack, tracks mistakes. In pencil mode: delegates to `togglePencilMark()` |
 | `togglePencilMark(num)` | Toggles a candidate digit in the selected cell's pencil mark Set |
 | `clearPencilMarksFromPeers(row, col, num)` | Removes `num` from pencil marks of all peer cells (row, column, box); returns a snapshot for undo |
 | `eraseSelected()` | In pen mode: clears the selected cell's value. In pencil mode: clears all pencil marks in the selected cell |
@@ -254,6 +325,7 @@ basic_sudoku/
 | `stopTimer()` | Clears the timer interval, sets `timerRunning` to false |
 | `updateTimerDisplay()` | Updates the `#timer` element text with formatted elapsed time |
 | `updateMistakeDisplay()` | Updates the `#mistakes` element text with current mistake count |
+| `updateHintDisplay()` | Updates the `#hints` element text with current hint count |
 
 ### Hint System
 
@@ -277,7 +349,7 @@ basic_sudoku/
 | `applyConflictHighlighting()` | Scans all filled cells and adds the `conflict` CSS class to any with duplicates in their row/column/box |
 | `hasConflict(row, col, val)` | Returns `true` if `val` at `(row, col)` conflicts with another cell in the same row, column, or 3×3 box |
 | `isBoardComplete()` | Returns `true` if all 81 cells are filled and there are zero conflicts |
-| `checkWin()` | On win: stops timer, computes score, saves best score, populates win banner with results, clears save |
+| `checkWin()` | On win: stops timer, computes score, saves best score, populates win overlay with results, clears save |
 
 ### Save / Load
 
@@ -291,7 +363,7 @@ basic_sudoku/
 
 | Function | Description |
 |---|---|
-| `newGame(difficulty)` | Generates a random puzzle via `generatePuzzle()`, resets all state, re-renders the board, updates active button styling |
+| `newGame(difficulty)` | Generates a random puzzle via `generatePuzzle()`, resets all state (board, pencil marks, mistakes, hints, timer), re-renders the board, updates active button styling |
 
 ### Event Listeners
 
@@ -302,11 +374,14 @@ basic_sudoku/
 | `#btn-undo` | `click` | Pops last move from history, restores previous value and pencil marks |
 | `#btn-clear` | `click` | Resets all user-entered cells to empty, clears pencil marks and history |
 | `#btn-pencil` | `click` | Toggles between pen and pencil mode |
+| `#btn-hint` | `click` | Calls `giveHint()` |
 | `#btn-easy` | `click` | Calls `newGame('easy')` |
 | `#btn-medium` | `click` | Calls `newGame('medium')` |
 | `#btn-hard` | `click` | Calls `newGame('hard')` |
 | `#btn-new-game` | `click` | Calls `newGame(currentDifficulty)` |
-| `document` | `keydown` | Handles 1-9 input, erase (Backspace/Delete/0), arrow key navigation, and `P` to toggle pen/pencil mode |
+| `#theme-select` | `change` | Calls `applyTheme()` and `saveTheme()` |
+| `document` | `click` | If click target is not a `.cell`, clears `selectedCell` and removes highlights |
+| `document` | `keydown` | Handles 1-9 input, erase (Backspace/Delete/0), arrow key navigation, `P` to toggle pen/pencil, `H` for hint |
 
 ---
 
@@ -314,38 +389,42 @@ basic_sudoku/
 
 | Class | Element | Description |
 |---|---|---|
-| `#theme-select` | Theme dropdown (`.theme-select`) | Pill-shaped select in controls row, visually distinct from difficulty buttons, pushed to right with margin-left: auto |
-| `.status-bar` | Timer + mistakes row | Flex row between difficulty buttons and board |
-| `.timer` | Timer span | Bold green (#4ecca3), tabular-nums |
-| `.mistakes` | Mistakes span | Subtle gray (#888) |
+| `.container` | Main wrapper | Flex column, centered, `gap: var(--gap)` |
+| `.controls` | Difficulty + theme row | Flex row, `width: var(--board-size)`, `nowrap` on desktop, `wrap` on mobile |
+| `.diff-btn` | Difficulty buttons | Accent border, proportional horizontal padding `calc(var(--board-size) * 0.025)` |
+| `.theme-select` | Theme dropdown | Pill-shaped (16px radius), dim border, `margin-left: auto`, proportional padding |
+| `.status-bar` | Timer + counters | Flex row, `width: var(--board-size)`, space-between |
+| `.timer` | Timer span | Bold, `var(--color-secondary)`, tabular-nums, `clamp()` font size |
+| `.mistakes` | Mistakes span | `var(--color-text-dim)` |
+| `.hints` | Hints span | `var(--color-text-dim)` |
+| `.board` | Grid container | 9-column CSS grid, `var(--board-size)` × `var(--board-size)`, accent border |
+| `.cell` | Each grid cell | Flex-centered, `font-size: calc(var(--board-size) / 20)`, cell border |
+| `.cell.locked` | Pre-filled cells | Bold, `var(--bg-cell-locked)` background, `var(--color-cell-locked)` text, not editable |
+| `.cell.user-input` | User-entered values | `var(--color-secondary)` text color |
+| `.cell.hinted` | Hint-revealed cells | `var(--color-hint)` text color |
+| `.cell.highlight` | Row/col/box peers | `var(--bg-cell-highlight)` — visible tint between empty and selected |
+| `.cell.selected` | Active cell | `var(--bg-cell-selected)` — brightest of three levels (must come after `.highlight` in CSS) |
+| `.cell.conflict` | Rule-violating cells | `var(--color-accent)` text + `var(--bg-conflict)` background (`!important`, overrides all) |
+| `.pencil-grid` | Mini-grid inside cells | 3×3 CSS grid for displaying candidate digits |
+| `.pencil-grid span` | Each candidate slot | `font-size: calc(var(--board-size) / 50)`, `var(--color-text-dim)` |
+| `.number-pad` | Number pad grid | 9-column grid, `width: var(--board-size)`, `gap: clamp(2px, 1vh, 6px)` |
+| `.num-btn` | Number pad buttons | `var(--bg-board)` background, `clamp()` padding and font size |
+| `.action-buttons` | Action button row | Flex row, `width: var(--board-size)`, `nowrap` on desktop, `wrap` on mobile |
+| `.action-btn` | Undo/Clear/Pen/Hint/New Game | Secondary accent border, proportional padding `calc(var(--board-size) * 0.03)` |
+| `.pencil-btn` | Pen/Pencil toggle | Accent border color, `.active` fills with accent |
+| `.pencil-btn.active` | Pencil mode active | Accent-filled button |
+| `.hint-btn` | Hint button | Hint color border, hover fills with hint color |
+| `.hint-message` | Conflict warning | Accent color text, hidden by default |
+| `.win-overlay` | Win overlay backdrop | Full-viewport fixed overlay, semi-transparent background, flex-centers win banner |
+| `.win-banner` | Win message container | Centered inside overlay, themed background, box-shadow, hidden when overlay has `.hidden` |
 | `.win-stats` | Score breakdown container | Column layout in win banner |
 | `.win-stat-row` | Score row | Label-value flex row |
-| `.win-stat-label` | Row label | Gray (#888) |
-| `.win-stat-value` | Row value | Bold, tabular-nums |
-| `.win-score-row` | Score row | Highlighted green value, larger font |
-| `.win-best-row` | Best score row | Red value (#e94560) |
-| `.cell.hinted` | Hint-revealed cells | Blue text (#5dade2) |
-| `.hints` | Hint counter span | Subtle gray (#888) |
-| `.hint-btn` | Hint button | Blue-bordered button (#5dade2) |
-| `.hint-message` | Conflict warning | Red text, hidden by default |
-| `.board` | Grid container | 9-column CSS grid, 450×450px, dark background |
-| `.cell` | Each grid cell | Flex-centered, 1.4rem font, border, pointer cursor |
-| `.cell.locked` | Pre-filled cells | Bold, darker background, default cursor (not editable) |
-| `.cell.user-input` | User-entered values | Green text color |
-| `.cell.selected` | Active cell | Brightest of three levels — clearly distinct from both empty and highlighted cells |
-| `.cell.highlight` | Row/col/box peers | Visible tint between empty cells and selected cell — clearly distinguishable from both |
-| `.cell.conflict` | Rule-violating cells | Red text + red-tinted background (overrides other classes) |
-| `.num-btn` | Number pad buttons | Grid of 9 buttons, hover effect |
-| `.diff-btn` | Difficulty buttons | Bordered buttons with active state |
-| `.pencil-grid` | Mini-grid inside cells | 3×3 CSS grid for displaying candidate digits |
-| `.pencil-grid span` | Each candidate slot | Small font (0.55rem), dim color (#888) |
-| `.pencil-btn` | Pen/Pencil toggle | Red-bordered toggle button |
-| `.pencil-btn.active` | Pencil mode active | Red-filled button indicating pencil mode |
-| `.action-btn` | Undo/Clear/New Game | Bordered buttons with hover fill |
-| `.win-overlay` | Win overlay backdrop | Full-viewport fixed overlay with semi-transparent background, flex-centers the win banner |
-| `.win-banner` | Win message container | Centered inside overlay, bordered box with box-shadow; hidden when overlay has `.hidden` |
+| `.win-stat-label` | Row label | `var(--color-text-dim)` |
+| `.win-stat-value` | Row value | Bold, tabular-nums, `var(--color-text)` |
+| `.win-score-row` | Score row | `var(--color-secondary)` value, larger font |
+| `.win-best-row` | Best score row | `var(--color-accent)` value |
+| `.screen-error` | Screen-too-small error | Centered error message, shown via media query when viewport is extremely small |
 | `.hidden` | Any element | `display: none` |
-| `.screen-error` | Screen-too-small error | Centered error message, shown via media query when viewport is extremely small (height < 320px or width < 280px) |
 
 ---
 
