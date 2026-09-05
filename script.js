@@ -17,6 +17,37 @@ let timerRunning = false; // whether the timer is actively ticking (runtime only
 let hintCount = 0;       // number of hints used this game (persisted)
 let hintedCells = new Set(); // indices of cells revealed via hint (persisted)
 
+// ---- Theme System -------------------------------------------
+const THEME_KEY = 'sudoku-theme';
+const themeSelect = document.getElementById('theme-select');
+
+function applyTheme(themeName) {
+    document.body.setAttribute('data-theme', themeName);
+    if (themeSelect) themeSelect.value = themeName;
+}
+
+function getSavedTheme() {
+    return withLocalStorage(() => {
+        const theme = localStorage.getItem(THEME_KEY);
+        const valid = ['midnight', 'light', 'forest', 'ocean'];
+        return valid.includes(theme) ? theme : 'midnight';
+    }, 'midnight');
+}
+
+function saveTheme(themeName) {
+    withLocalStorage(() => {
+        localStorage.setItem(THEME_KEY, themeName);
+    }, undefined);
+}
+
+themeSelect.addEventListener('change', () => {
+    applyTheme(themeSelect.value);
+    saveTheme(themeSelect.value);
+});
+
+// Apply saved theme immediately (before board renders)
+applyTheme(getSavedTheme());
+
 // ---- Timer & Display ----------------------------------------
 const timerEl = document.getElementById('timer');
 const mistakesEl = document.getElementById('mistakes');
