@@ -108,9 +108,9 @@ h1 {
 /* Difficulty buttons + theme selector */
 .controls {
     display: flex;
-    gap: clamp(4px, 1vw, 10px);
+    gap: clamp(3px, 1vw, 8px);
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     width: var(--board-size);
 }
@@ -118,7 +118,7 @@ h1 {
 /* Theme selector (inline in controls row, visually distinct) */
 .theme-select {
     margin-left: auto;
-    padding: 5px 12px;
+    padding: 5px calc(var(--board-size) * 0.02);
     font-size: 0.85rem;
     border: 1px solid var(--color-text-dim);
     background: var(--bg-board);
@@ -165,7 +165,7 @@ h1 {
 }
 
 .diff-btn {
-    padding: clamp(5px, 1.2vh, 8px) clamp(8px, 2vw, 20px);
+    padding: clamp(5px, 1.2vh, 8px) calc(var(--board-size) * 0.025);
     font-size: clamp(0.8rem, 2vh, 1rem);
     border: 2px solid var(--color-accent);
     background: transparent;
@@ -300,14 +300,14 @@ h1 {
 /* Action buttons */
 .action-buttons {
     display: flex;
-    gap: clamp(4px, 1vw, 10px);
-    flex-wrap: wrap;
+    gap: clamp(3px, 1vw, 8px);
+    flex-wrap: nowrap;
     justify-content: center;
     width: var(--board-size);
 }
 
 .action-btn {
-    padding: clamp(5px, 1.2vh, 8px) clamp(8px, 2vw, 24px);
+    padding: clamp(5px, 1.2vh, 8px) calc(var(--board-size) * 0.03);
     font-size: clamp(0.8rem, 2vh, 1rem);
     border: 2px solid var(--color-secondary);
     background: transparent;
@@ -459,6 +459,14 @@ h1 {
     :root {
         /* Mobile has smaller chrome (clamped fonts/padding) → more board room */
         --board-size: max(var(--board-min), min(var(--board-max), 92vw, calc(100dvh - 260px)));
+    }
+
+    .controls {
+        flex-wrap: wrap;
+    }
+
+    .action-buttons {
+        flex-wrap: wrap;
     }
 
     .win-banner {
