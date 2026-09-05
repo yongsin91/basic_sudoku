@@ -136,7 +136,7 @@ basic_sudoku/
 
 ### Win State
 - **Auto-detection** — Game detects completion when all 81 cells are filled with no conflicts
-- **Win banner** — Styled in-page “🎉 You solved it!” message showing time, mistakes, final score, and best score, with a “New Game” button (no browser alerts)
+- **Win overlay** — Styled modal “🎉 You solved it!” overlay centered on screen with a dimmed backdrop, showing time, mistakes, final score, and best score, with a “New Game” button (no browser alerts, no scrolling needed)
 
 ### Responsive Design
 - **Desktop** - Fixed 450×450px board with full-size number pad
@@ -305,8 +305,7 @@ basic_sudoku/
 
 | Class | Element | Description |
 |---|---|---|
-| `.theme-bar` | Theme selector container | Centered row above difficulty buttons |
-| `#theme-select` | Theme dropdown | Themed select element, hover/focus uses accent color |
+| `#theme-select` | Theme dropdown (`.theme-select`) | Pill-shaped select in controls row, visually distinct from difficulty buttons, pushed to right with margin-left: auto |
 | `.status-bar` | Timer + mistakes row | Flex row between difficulty buttons and board |
 | `.timer` | Timer span | Bold green (#4ecca3), tabular-nums |
 | `.mistakes` | Mistakes span | Subtle gray (#888) |
@@ -334,7 +333,8 @@ basic_sudoku/
 | `.pencil-btn` | Pen/Pencil toggle | Red-bordered toggle button |
 | `.pencil-btn.active` | Pencil mode active | Red-filled button indicating pencil mode |
 | `.action-btn` | Undo/Clear/New Game | Bordered buttons with hover fill |
-| `.win-banner` | Win message container | Centered, bordered box; hidden when `.hidden` added |
+| `.win-overlay` | Win overlay backdrop | Full-viewport fixed overlay with semi-transparent background, flex-centers the win banner |
+| `.win-banner` | Win message container | Centered inside overlay, bordered box with box-shadow; hidden when overlay has `.hidden` |
 | `.hidden` | Any element | `display: none` |
 
 ---
