@@ -436,6 +436,14 @@ function giveHint() {
 
 document.getElementById('btn-hint').addEventListener('click', giveHint);
 
+// Click outside the board clears selection and highlights
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.cell')) {
+        selectedCell = null;
+        applyHighlights();
+    }
+});
+
 // ---- Keyboard input -----------------------------------------
 document.addEventListener('keydown', (e) => {
     if (e.key === 'p' || e.key === 'P') {
