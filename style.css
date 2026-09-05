@@ -22,7 +22,8 @@
 
     /* Viewport-fit sizing */
     --board-max: 450px;
-    --board-size: min(var(--board-max), 92vw, calc(100dvh - 310px));
+    --board-min: 240px;
+    --board-size: max(var(--board-min), min(var(--board-max), 92vw, calc(100dvh - 310px)));
     --gap: clamp(6px, 2vh, 16px);
     --pad: clamp(8px, 2vh, 20px);
 }
@@ -360,6 +361,28 @@ h1 {
     display: none;
 }
 
+/* Screen-too-small error (shown via media query) */
+.screen-error {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 12px;
+    padding: 20px;
+    min-height: 100dvh;
+}
+
+.screen-error p:first-child {
+    font-size: 2rem;
+    color: var(--color-accent);
+}
+
+.screen-error p:last-child {
+    font-size: 1rem;
+    color: var(--color-text-dim);
+}
+
 /* Win overlay (full-viewport modal) */
 .win-overlay {
     position: fixed;
@@ -435,7 +458,7 @@ h1 {
 @media (max-width: 520px) {
     :root {
         /* Mobile has smaller chrome (clamped fonts/padding) → more board room */
-        --board-size: min(var(--board-max), 92vw, calc(100dvh - 260px));
+        --board-size: max(var(--board-min), min(var(--board-max), 92vw, calc(100dvh - 260px)));
     }
 
     .win-banner {
@@ -453,5 +476,26 @@ h1 {
     .theme-select {
         font-size: 0.75rem;
         padding: 4px 8px;
+    }
+}
+
+/* Short screens: allow scrolling when board hits minimum size */
+@media (max-height: 550px) {
+    body {
+        overflow: auto;
+        height: auto;
+        min-height: 100dvh;
+        align-items: flex-start;
+    }
+}
+
+/* Extremely small screens: show error, hide game */
+@media (max-height: 320px), (max-width: 280px) {
+    .container {
+        display: none;
+    }
+
+    .screen-error {
+        display: flex;
     }
 }
