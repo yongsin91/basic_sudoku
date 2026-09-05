@@ -99,7 +99,7 @@ body {
 }
 
 h1 {
-    font-size: 2rem;
+    font-size: clamp(1.2rem, 4vh, 2rem);
     letter-spacing: 2px;
     color: var(--color-accent);
 }
@@ -144,7 +144,7 @@ h1 {
 }
 
 .timer {
-    font-size: 1.3rem;
+    font-size: clamp(0.9rem, 2.5vh, 1.3rem);
     font-weight: bold;
     color: var(--color-secondary);
     font-variant-numeric: tabular-nums;
@@ -161,8 +161,8 @@ h1 {
 }
 
 .diff-btn {
-    padding: 8px 20px;
-    font-size: 1rem;
+    padding: clamp(5px, 1.2vh, 8px) clamp(12px, 3vh, 20px);
+    font-size: clamp(0.8rem, 2vh, 1rem);
     border: 2px solid var(--color-accent);
     background: transparent;
     color: var(--color-text);
@@ -278,8 +278,8 @@ h1 {
 }
 
 .num-btn {
-    padding: 12px 0;
-    font-size: 1.2rem;
+    padding: clamp(6px, 1.5vh, 12px) 0;
+    font-size: clamp(0.8rem, 2vh, 1.2rem);
     border: 2px solid var(--color-cell-border);
     background: var(--bg-board);
     color: var(--color-text);
@@ -300,8 +300,8 @@ h1 {
 }
 
 .action-btn {
-    padding: 8px 24px;
-    font-size: 1rem;
+    padding: clamp(5px, 1.2vh, 8px) clamp(14px, 3vh, 24px);
+    font-size: clamp(0.8rem, 2vh, 1rem);
     border: 2px solid var(--color-secondary);
     background: transparent;
     color: var(--color-secondary);
