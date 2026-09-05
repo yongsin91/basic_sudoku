@@ -167,12 +167,12 @@ function applyHighlights() {
         cells.forEach(c => {
             const r = parseInt(c.dataset.row, 10);
             const cc = parseInt(c.dataset.col, 10);
-            if (r === row || cc === col ||
+            const isSelected = (r === row && cc === col);
+            if (isSelected) {
+                c.classList.add('selected');
+            } else if (r === row || cc === col ||
                 (r >= boxRow && r < boxRow + 3 && cc >= boxCol && cc < boxCol + 3)) {
                 c.classList.add('highlight');
-            }
-            if (r === row && cc === col) {
-                c.classList.add('selected');
             }
         });
     }
@@ -435,6 +435,14 @@ function giveHint() {
 }
 
 document.getElementById('btn-hint').addEventListener('click', giveHint);
+
+// Click outside the board clears selection and highlights
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.cell')) {
+        selectedCell = null;
+        applyHighlights();
+    }
+});
 
 // ---- Keyboard input -----------------------------------------
 document.addEventListener('keydown', (e) => {
