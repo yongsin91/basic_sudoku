@@ -425,36 +425,11 @@ h1 {
     display: none;
 }
 
-/* Responsive */
+/* Responsive — mobile adjustments */
 @media (max-width: 520px) {
-    .board {
-        width: 90vw;
-        height: 90vw;
-        max-width: 450px;
-        max-height: 450px;
-    }
-
-    .status-bar {
-        width: 90vw;
-        max-width: 450px;
-    }
-
-    .number-pad {
-        width: 90vw;
-        max-width: 450px;
-    }
-
-    .cell {
-        font-size: 1rem;
-    }
-
-    .pencil-grid span {
-        font-size: 0.42rem;
-    }
-
-    .num-btn {
-        font-size: 0.9rem;
-        padding: 10px 0;
+    :root {
+        /* Mobile has smaller chrome (clamped fonts/padding) → more board room */
+        --board-size: min(var(--board-max), 92vw, calc(100dvh - 260px));
     }
 
     .win-banner {
@@ -472,9 +447,5 @@ h1 {
     .theme-select {
         font-size: 0.75rem;
         padding: 4px 8px;
-    }
-
-    h1 {
-        font-size: 1.5rem;
     }
 }
