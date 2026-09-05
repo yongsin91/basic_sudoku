@@ -21,6 +21,57 @@
     --bg-conflict: #3a1a2a;
 }
 
+/* ---- Theme: Light ------------------------------------------ */
+[data-theme="light"] {
+    --bg-page: #f5f5f5;
+    --color-text: #333;
+    --color-text-dim: #888;
+    --color-accent: #2563eb;
+    --color-secondary: #059669;
+    --color-hint: #d97706;
+    --bg-board: #ffffff;
+    --bg-cell-locked: #f0f0f0;
+    --color-cell-locked: #666;
+    --bg-cell-selected: #dbeafe;
+    --bg-cell-highlight: #f0f7ff;
+    --color-cell-border: #d0d0d0;
+    --bg-conflict: #fee2e2;
+}
+
+/* ---- Theme: Forest ----------------------------------------- */
+[data-theme="forest"] {
+    --bg-page: #1a2e1a;
+    --color-text: #d4e8d4;
+    --color-text-dim: #8a9a8a;
+    --color-accent: #d4a017;
+    --color-secondary: #6abf69;
+    --color-hint: #5dade2;
+    --bg-board: #1e3a1e;
+    --bg-cell-locked: #162416;
+    --color-cell-locked: #9aaa9a;
+    --bg-cell-selected: #2a4a2a;
+    --bg-cell-highlight: #1f3a1f;
+    --color-cell-border: #2a4a2a;
+    --bg-conflict: #3a1a1a;
+}
+
+/* ---- Theme: Ocean ------------------------------------------ */
+[data-theme="ocean"] {
+    --bg-page: #0d1b2a;
+    --color-text: #e0e8f0;
+    --color-text-dim: #7a8a9a;
+    --color-accent: #00b4d8;
+    --color-secondary: #48cae4;
+    --color-hint: #f4a261;
+    --bg-board: #142b3d;
+    --bg-cell-locked: #0a1825;
+    --color-cell-locked: #9ab0c0;
+    --bg-cell-selected: #1a3a5a;
+    --bg-cell-highlight: #122540;
+    --color-cell-border: #1f3a5a;
+    --bg-conflict: #3a1a2a;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--bg-page);
