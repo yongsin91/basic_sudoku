@@ -22,7 +22,8 @@
 
     /* Viewport-fit sizing */
     --board-max: 450px;
-    --board-size: min(var(--board-max), 92vw, calc(100dvh - 310px));
+    --board-min: 240px;
+    --board-size: max(var(--board-min), min(var(--board-max), 92vw, calc(100dvh - 310px)));
     --gap: clamp(6px, 2vh, 16px);
     --pad: clamp(8px, 2vh, 20px);
 }
@@ -107,8 +108,11 @@ h1 {
 /* Difficulty buttons + theme selector */
 .controls {
     display: flex;
-    gap: 10px;
+    gap: clamp(4px, 1vw, 10px);
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: var(--board-size);
 }
 
 /* Theme selector (inline in controls row, visually distinct) */
@@ -161,7 +165,7 @@ h1 {
 }
 
 .diff-btn {
-    padding: clamp(5px, 1.2vh, 8px) clamp(12px, 3vh, 20px);
+    padding: clamp(5px, 1.2vh, 8px) clamp(8px, 2vw, 20px);
     font-size: clamp(0.8rem, 2vh, 1rem);
     border: 2px solid var(--color-accent);
     background: transparent;
@@ -296,11 +300,14 @@ h1 {
 /* Action buttons */
 .action-buttons {
     display: flex;
-    gap: 10px;
+    gap: clamp(4px, 1vw, 10px);
+    flex-wrap: wrap;
+    justify-content: center;
+    width: var(--board-size);
 }
 
 .action-btn {
-    padding: clamp(5px, 1.2vh, 8px) clamp(14px, 3vh, 24px);
+    padding: clamp(5px, 1.2vh, 8px) clamp(8px, 2vw, 24px);
     font-size: clamp(0.8rem, 2vh, 1rem);
     border: 2px solid var(--color-secondary);
     background: transparent;
@@ -352,6 +359,28 @@ h1 {
 
 .hint-message.hidden {
     display: none;
+}
+
+/* Screen-too-small error (shown via media query) */
+.screen-error {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 12px;
+    padding: 20px;
+    min-height: 100dvh;
+}
+
+.screen-error p:first-child {
+    font-size: 2rem;
+    color: var(--color-accent);
+}
+
+.screen-error p:last-child {
+    font-size: 1rem;
+    color: var(--color-text-dim);
 }
 
 /* Win overlay (full-viewport modal) */
@@ -429,7 +458,7 @@ h1 {
 @media (max-width: 520px) {
     :root {
         /* Mobile has smaller chrome (clamped fonts/padding) → more board room */
-        --board-size: min(var(--board-max), 92vw, calc(100dvh - 260px));
+        --board-size: max(var(--board-min), min(var(--board-max), 92vw, calc(100dvh - 260px)));
     }
 
     .win-banner {
@@ -447,5 +476,26 @@ h1 {
     .theme-select {
         font-size: 0.75rem;
         padding: 4px 8px;
+    }
+}
+
+/* Short screens: allow scrolling when board hits minimum size */
+@media (max-height: 550px) {
+    body {
+        overflow: auto;
+        height: auto;
+        min-height: 100dvh;
+        align-items: flex-start;
+    }
+}
+
+/* Extremely small screens: show error, hide game */
+@media (max-height: 320px), (max-width: 280px) {
+    .container {
+        display: none;
+    }
+
+    .screen-error {
+        display: flex;
     }
 }

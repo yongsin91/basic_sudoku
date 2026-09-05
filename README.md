@@ -139,11 +139,17 @@ basic_sudoku/
 - **Win overlay** — Styled modal “🎉 You solved it!” overlay centered on screen with a dimmed backdrop, showing time, mistakes, final score, and best score, with a “New Game” button (no browser alerts, no scrolling needed)
 
 ### Responsive Design — Fit-to-Viewport (No Scrolling)
-- **Viewport-height sizing** — Board size is `min(450px, 92vw, 100dvh − 310px)`, so it scales to fit both width and height of any screen — laptop, desktop, iPad, or mobile — with zero scrolling
-- **`overflow: hidden`** on body hard-prevents scrolling; `100dvh` (dynamic viewport height) adapts to mobile browser UI
+- **Viewport-height sizing** — Board size is `max(240px, min(450px, 92vw, 100dvh − 310px))`, so it scales to fit both width and height of any screen — laptop, desktop, iPad, or mobile — with zero scrolling on normal screens
+- **Minimum board size** — Board never shrinks below 240px (~26px per cell, the minimum for playable touch interaction). Below this, the game is not playable
+- **Three-tier viewport handling**:
+  - **Normal screens (height ≥ 550px)**: Board scales to fit, `overflow: hidden`, no scrolling
+  - **Short screens (height < 550px)**: Board clamped to 240px minimum, `overflow: auto` allows scrolling to reach content that doesn't fit
+  - **Extremely small screens (height < 320px or width < 280px)**: Error overlay shown ("Screen too small. Please rotate your device or use a larger screen."), game hidden entirely
+- **`100dvh`** (dynamic viewport height) adapts to mobile browser UI appearing/disappearing
 - **`clamp()` scaling** — Gaps (6–16px), body padding (8–20px), button fonts, and cell fonts all scale with viewport height, shrinking on shorter screens to maximize board space
 - **Proportional cell fonts** — Cell and pencil mark font sizes are `calc(var(--board-size) / N)`, so text stays in proportion as the board grows or shrinks
-- **Board, number pad, and status bar** all share the same `--board-size` width, keeping the layout aligned at any size
+- **Board, number pad, status bar, controls, and action buttons** all share the same `--board-size` width — buttons wrap to a second row if needed instead of overflowing the viewport
+- **Width-scaled button padding** — Button horizontal padding uses `2vw` (not `vh`) so it shrinks on narrow screens, preventing buttons from touching viewport edges
 
 ---
 
@@ -339,6 +345,7 @@ basic_sudoku/
 | `.win-overlay` | Win overlay backdrop | Full-viewport fixed overlay with semi-transparent background, flex-centers the win banner |
 | `.win-banner` | Win message container | Centered inside overlay, bordered box with box-shadow; hidden when overlay has `.hidden` |
 | `.hidden` | Any element | `display: none` |
+| `.screen-error` | Screen-too-small error | Centered error message, shown via media query when viewport is extremely small (height < 320px or width < 280px) |
 
 ---
 
