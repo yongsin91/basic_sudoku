@@ -539,7 +539,7 @@ document.getElementById('btn-clear').addEventListener('click', () => {
 });
 
 // ---- 3j. Win Detection --------------------------------------
-const winBanner = document.getElementById('win-banner');
+const winOverlay = document.getElementById('win-overlay');
 
 function checkWin() {
     if (isBoardComplete()) {
@@ -569,10 +569,10 @@ function checkWin() {
             bestLabel.textContent = 'Best';
         }
 
-        winBanner.classList.remove('hidden');
+        winOverlay.classList.remove('hidden');
         clearSave();
     } else {
-        winBanner.classList.add('hidden');
+        winOverlay.classList.add('hidden');
     }
 }
 
@@ -596,7 +596,7 @@ function newGame(difficulty) {
     mistakeCount = 0;
     hintCount = 0;
     hintedCells = new Set();
-    winBanner.classList.add('hidden');
+    winOverlay.classList.add('hidden');
 
     // Update active button styling
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
