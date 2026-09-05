@@ -55,6 +55,11 @@ h1 {
     color: #888;
 }
 
+.hints {
+    font-size: 0.95rem;
+    color: #888;
+}
+
 .diff-btn {
     padding: 8px 20px;
     font-size: 1rem;
@@ -122,6 +127,11 @@ h1 {
 /* User-entered cells */
 .cell.user-input {
     color: #4ecca3;
+}
+
+/* Hinted cells */
+.cell.hinted {
+    color: #5dade2;
 }
 
 /* Selected cell */
@@ -219,6 +229,29 @@ h1 {
 .pencil-btn.active {
     background: #e94560;
     color: #fff;
+}
+
+/* Hint button */
+.hint-btn {
+    border-color: #5dade2;
+    color: #5dade2;
+}
+
+.hint-btn:hover {
+    background: #5dade2;
+    color: #16213e;
+}
+
+/* Hint conflict message */
+.hint-message {
+    font-size: 0.9rem;
+    color: #e94560;
+    padding: 4px 12px;
+    transition: opacity 0.3s;
+}
+
+.hint-message.hidden {
+    display: none;
 }
 
 /* Win banner */

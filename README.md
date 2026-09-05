@@ -2,6 +2,8 @@
 
 ## Version
 
+**v1.5.0** — Adds hint system with scoring penalty (2026-09-05)
+
 **v1.4.0** — Adds timer & scoring system with best score persistence (2026-09-05)
 
 **v1.3.0** — Adds save/load game progress via localStorage (2026-09-05)
@@ -18,7 +20,7 @@
 
 ## Overview
 
-A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step - just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, pencil marks (candidate notes), full undo history, automatic save/load via localStorage, a live timer and scoring system with best-score persistence, and a responsive layout that works on desktop and mobile.
+A browser-based Sudoku game built with vanilla HTML, CSS, and JavaScript. No frameworks, no build step - just open and play. Features three difficulty levels, algorithmic random puzzle generation, real-time conflict detection, pencil marks (candidate notes), full undo history, automatic save/load via localStorage, a live timer and scoring system with best-score persistence, a hint system that reveals correct cell values, and a responsive layout that works on desktop and mobile.
 
 ### 🎮 Play Now
 
@@ -52,13 +54,14 @@ basic_sudoku/
 ├── generator.js                # Puzzle generator (backtracking + MRV solver)
 ├── package.json                # npm metadata & test scripts
 ├── test/
-│   ├── generator.test.js       # 20 assert-based tests for generator.js
+│   ├── generator.test.js       # 29 assert-based tests for generator.js
 │   ├── save-load.test.js       # 21 assert-based tests for serialize.js
-│   └── scoring.test.js         # 30 assert-based tests for scoring.js
+│   └── scoring.test.js         # 35 assert-based tests for scoring.js
 ├── PLAN-random-puzzle-generation.md  # Design notes for the generator
 ├── PLAN-pencil-marks.md             # Design notes for pencil marks
 ├── PLAN-save-load.md                # Design notes for save/load feature
 ├── PLAN-scoring-system.md           # Design notes for timer & scoring
+├── PLAN-hint-system.md              # Design notes for hint system
 └── README.md                   # This documentation
 ```
 
@@ -112,6 +115,15 @@ basic_sudoku/
 - **Best score persistence** — The highest score per difficulty is saved to `localStorage` and displayed in the win banner; a “🏆 New!” badge appears when a new best is achieved
 - **Timer persists across sessions** — Elapsed time is saved/restored via the save/load system, so the timer resumes correctly after a browser restart
 
+### Hint System
+- **On-demand hints** — Click the 💡 Hint button or press `H` to reveal the correct value for one empty cell; if a cell is selected and empty, that cell is hinted, otherwise a random empty cell is chosen
+- **Conflict guard** — Hints are disabled when the board has conflicting placements; a “Fix conflicts first” message appears briefly
+- **Hinted cell styling** — Cells revealed via hints are shown in blue (`#5dade2`), distinct from user-input (green) and locked (gray) cells
+- **Hint penalty** — Each hint adds a 50-point penalty to the final score (capped at 50% of base), encouraging players to solve independently
+- **Undoable** — Hint placements can be undone like any other move
+- **Hint counter** — Displayed in the status bar and in the win banner
+- **Persists across sessions** — Hint count and hinted cells are saved/restored via the save/load system
+
 ### Win State
 - **Auto-detection** — Game detects completion when all 81 cells are filled with no conflicts
 - **Win banner** — Styled in-page “🎉 You solved it!” message showing time, mistakes, final score, and best score, with a “New Game” button (no browser alerts)
@@ -126,7 +138,7 @@ basic_sudoku/
 
 | Function | Description |
 |---|---|
-| `computeScore(difficulty, elapsedSeconds, mistakeCount)` | Computes final score from difficulty, time, and mistakes; returns `{ base, timePenalty, mistakePenalty, final, breakdown }` |
+| `computeScore(difficulty, elapsedSeconds, mistakeCount, hintCount)` | Computes final score from difficulty, time, mistakes, and hints; returns `{ base, timePenalty, mistakePenalty, hintPenalty, final, breakdown }` |
 | `formatTime(seconds)` | Formats seconds as `MM:SS` string |
 | `getBestScores()` | Reads all best scores from `localStorage`; returns `{ easy, medium, hard }` or `{}` |
 | `getBestScore(difficulty)` | Reads the best score for a single difficulty; returns `0` if none exists |
@@ -160,6 +172,7 @@ basic_sudoku/
 | `isValid(board, row, col, val)` | Checks if `val` can be legally placed at `(row, col)` |
 | `generateFullSolution()` | Generates a complete, valid 9×9 solution using randomized backtracking with MRV |
 | `countSolutions(board, limit)` | Counts solutions up to `limit` (default 2); returns 0, 1, or `limit` |
+| `solveBoard(board)` | Solves a board and returns the full 81-cell solution, or `null` if no solution exists (conflicts or unsolvable) |
 | `createPuzzle(solution, targetClues)` | Removes cells from a full solution while maintaining a unique solution |
 | `getTargetClueCount(difficulty)` | Returns a random clue count within the difficulty's range |
 | `generatePuzzle(difficulty)` | Orchestrator: generates a complete puzzle for the given difficulty |
@@ -182,6 +195,8 @@ basic_sudoku/
 | `pencilMode` | Boolean — `false` = pen mode (place numbers), `true` = pencil mode (toggle candidates) |
 | `elapsedSeconds` | Number — accumulated seconds for the current game (persisted via save/load) |
 | `mistakeCount` | Number — total conflicting placements this game (persisted via save/load) |
+| `hintCount` | Number — total hints used this game (persisted via save/load) |
+| `hintedCells` | `Set` — indices of cells revealed via hint (persisted via save/load) |
 | `timerInterval` | `setInterval` ID for the timer tick (runtime only, not persisted) |
 | `timerRunning` | Boolean — whether the timer is actively ticking (runtime only, not persisted) |
 | `initPencilMarks()` | Initializes the `pencilMarks` array with 81 empty Sets |
@@ -220,6 +235,13 @@ basic_sudoku/
 | `stopTimer()` | Clears the timer interval, sets `timerRunning` to false |
 | `updateTimerDisplay()` | Updates the `#timer` element text with formatted elapsed time |
 | `updateMistakeDisplay()` | Updates the `#mistakes` element text with current mistake count |
+
+### Hint System
+
+| Function | Description |
+|---|---|
+| `giveHint()` | Finds an empty cell, solves the board, places the correct value, marks it as hinted, pushes to undo, increments hint counter |
+| `updateHintDisplay()` | Updates the `#hints` element text with current hint count |
 
 ### Validation
 
@@ -274,6 +296,10 @@ basic_sudoku/
 | `.win-stat-value` | Row value | Bold, tabular-nums |
 | `.win-score-row` | Score row | Highlighted green value, larger font |
 | `.win-best-row` | Best score row | Red value (#e94560) |
+| `.cell.hinted` | Hint-revealed cells | Blue text (#5dade2) |
+| `.hints` | Hint counter span | Subtle gray (#888) |
+| `.hint-btn` | Hint button | Blue-bordered button (#5dade2) |
+| `.hint-message` | Conflict warning | Red text, hidden by default |
 | `.board` | Grid container | 9-column CSS grid, 450×450px, dark background |
 | `.cell` | Each grid cell | Flex-centered, 1.4rem font, border, pointer cursor |
 | `.cell.locked` | Pre-filled cells | Bold, darker background, default cursor (not editable) |
@@ -308,10 +334,10 @@ basic_sudoku/
 
 ```bash
 cd basic_sudoku
-npm test               # 20 generator tests
+npm test               # 29 generator tests
 npm run test:save      # 21 save/load serialization tests
-npm run test:scoring   # 30 scoring tests
-npm run test:all       # all 71 tests
+npm run test:scoring   # 35 scoring tests
+npm run test:all       # all 85 tests
 ```
 All tests use Node's built-in `assert` module — no external dependencies.
 
@@ -319,5 +345,4 @@ All tests use Node's built-in `assert` module — no external dependencies.
 
 ## Future Enhancements (Not Yet Implemented)
 
-- Hint system (reveal one correct cell)
 - Puzzle import / export

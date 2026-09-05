@@ -23,6 +23,7 @@ const DIFFICULTY_BASE = {
 
 const TIME_PENALTY_PER_SECOND = 1;    // 1 point per second
 const MISTAKE_PENALTY_PER = 30;       // 30 points per mistake
+const HINT_PENALTY_PER = 50;         // 50 points per hint
 const PENALTY_CAP_FRACTION = 0.5;     // each penalty capped at 50% of base
 const MIN_SCORE_FRACTION = 0.1;       // minimum score is 10% of base
 
@@ -35,9 +36,10 @@ const BEST_SCORES_KEY = 'sudoku-best-scores';
  * @param {string} difficulty - 'easy' | 'medium' | 'hard'
  * @param {number} elapsedSeconds - total seconds taken
  * @param {number} mistakeCount - number of conflicting placements
- * @returns {Object} { base, timePenalty, mistakePenalty, final, breakdown }
+ * @param {number} hintCount - number of hints used (default 0)
+ * @returns {Object} { base, timePenalty, mistakePenalty, hintPenalty, final, breakdown }
  */
-function computeScore(difficulty, elapsedSeconds, mistakeCount) {
+function computeScore(difficulty, elapsedSeconds, mistakeCount, hintCount = 0) {
     const base = DIFFICULTY_BASE[difficulty] || DIFFICULTY_BASE.easy;
     const maxPenalty = Math.floor(base * PENALTY_CAP_FRACTION);
 
@@ -51,11 +53,16 @@ function computeScore(difficulty, elapsedSeconds, mistakeCount) {
         maxPenalty
     );
 
-    const minScore = Math.floor(base * MIN_SCORE_FRACTION);
-    const final = Math.max(minScore, base - timePenalty - mistakePenalty);
-    const breakdown = `${base} - ${timePenalty} - ${mistakePenalty} = ${final}`;
+    const hintPenalty = Math.min(
+        hintCount * HINT_PENALTY_PER,
+        maxPenalty
+    );
 
-    return { base, timePenalty, mistakePenalty, final, breakdown };
+    const minScore = Math.floor(base * MIN_SCORE_FRACTION);
+    const final = Math.max(minScore, base - timePenalty - mistakePenalty - hintPenalty);
+    const breakdown = `${base} - ${timePenalty} - ${mistakePenalty} - ${hintPenalty} = ${final}`;
+
+    return { base, timePenalty, mistakePenalty, hintPenalty, final, breakdown };
 }
 
 // ---- Time Formatting ----------------------------------------
@@ -122,6 +129,7 @@ if (typeof module !== 'undefined' && module.exports) {
         DIFFICULTY_BASE,
         TIME_PENALTY_PER_SECOND,
         MISTAKE_PENALTY_PER,
+        HINT_PENALTY_PER,
         PENALTY_CAP_FRACTION,
         MIN_SCORE_FRACTION,
         computeScore,

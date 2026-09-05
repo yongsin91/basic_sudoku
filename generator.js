@@ -236,6 +236,110 @@ function countSolutions(board, limit = 2) {
     return count;
 }
 
+// ---- Solve a board (returns solution or null) --------------
+// Uses the same bitmask + MRV backtracking solver as
+// countSolutions, but captures and returns the first solution
+// found instead of counting. Returns null if the board has
+// conflicts or no solution exists.
+function solveBoard(board) {
+    const work = [...board];
+
+    // Validate pre-existing values for conflicts (same as countSolutions)
+    for (let i = 0; i < 81; i++) {
+        const v = work[i];
+        if (v === 0) continue;
+        const r = Math.floor(i / 9);
+        const c = i % 9;
+        for (let cc = 0; cc < 9; cc++) {
+            if (cc === c) continue;
+            if (work[r * 9 + cc] === v) return null;
+        }
+        for (let rr = 0; rr < 9; rr++) {
+            if (rr === r) continue;
+            if (work[rr * 9 + c] === v) return null;
+        }
+        const boxRow = Math.floor(r / 3) * 3;
+        const boxCol = Math.floor(c / 3) * 3;
+        for (let rr = boxRow; rr < boxRow + 3; rr++) {
+            for (let cc = boxCol; cc < boxCol + 3; cc++) {
+                if (rr === r && cc === c) continue;
+                if (work[rr * 9 + cc] === v) return null;
+            }
+        }
+    }
+
+    const { rows, cols, boxes } = buildMasks(work);
+    let solution = null;
+
+    function solve() {
+        if (solution) return; // already found
+
+        // Find the empty cell with the fewest candidates (MRV)
+        let bestIdx = -1;
+        let bestCount = 10;
+
+        for (let i = 0; i < 81; i++) {
+            if (work[i] !== 0) continue;
+            const r = Math.floor(i / 9);
+            const c = i % 9;
+            const b = boxIndex(r, c);
+            const used = rows[r] | cols[c] | boxes[b];
+            const available = ALL_BITS & ~used;
+
+            let cnt = 0;
+            let temp = available;
+            while (temp) {
+                cnt += temp & 1;
+                temp >>>= 1;
+            }
+
+            if (cnt === 0) return; // dead end
+            if (cnt < bestCount) {
+                bestCount = cnt;
+                bestIdx = i;
+                if (cnt === 1) break;
+            }
+        }
+
+        if (bestIdx === -1) {
+            solution = [...work];
+            return;
+        }
+
+        const r = Math.floor(bestIdx / 9);
+        const c = bestIdx % 9;
+        const b = boxIndex(r, c);
+        const used = rows[r] | cols[c] | boxes[b];
+        const available = ALL_BITS & ~used;
+
+        let temp = available;
+        while (temp) {
+            const trailing = temp & (-temp);
+            const d = Math.log2(trailing);
+            const m = bit(d);
+
+            work[bestIdx] = d;
+            rows[r] |= m;
+            cols[c] |= m;
+            boxes[b] |= m;
+
+            solve();
+
+            if (solution) return;
+
+            work[bestIdx] = 0;
+            rows[r] &= ~m;
+            cols[c] &= ~m;
+            boxes[b] &= ~m;
+
+            temp ^= trailing;
+        }
+    }
+
+    solve();
+    return solution;
+}
+
 // ---- Step 2: Remove cells to create a puzzle ----------------
 // Starts from a full solution and removes cells one by one,
 // checking after each removal that the puzzle still has a
@@ -289,6 +393,7 @@ if (typeof module !== 'undefined' && module.exports) {
         isValid,
         generateFullSolution,
         countSolutions,
+        solveBoard,
         createPuzzle,
         getTargetClueCount,
         generatePuzzle,

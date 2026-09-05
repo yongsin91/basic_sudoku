@@ -47,6 +47,8 @@ function makeSampleState() {
         selectedCell: { row: 0, col: 2 },
         elapsedSeconds: 185,
         mistakeCount: 3,
+        hintCount: 1,
+        hintedCells: [5, 42],
     };
 }
 
@@ -131,11 +133,13 @@ test('7. null selectedCell serializes to null', () => {
     assert.strictEqual(serialized.selectedCell, null);
 });
 
-test('7b. elapsedSeconds and mistakeCount are preserved', () => {
+test('7b. elapsedSeconds, mistakeCount, hintCount, and hintedCells are preserved', () => {
     const state = makeSampleState();
     const serialized = serializeState(state);
     assert.strictEqual(serialized.elapsedSeconds, 185);
     assert.strictEqual(serialized.mistakeCount, 3);
+    assert.strictEqual(serialized.hintCount, 1);
+    assert.deepStrictEqual(serialized.hintedCells, [5, 42]);
 });
 
 // ============================================================
@@ -155,6 +159,10 @@ test('8. round-trip: serialize → deserialize produces identical state', () => 
     assert.deepStrictEqual(restored.selectedCell, original.selectedCell);
     assert.strictEqual(restored.elapsedSeconds, original.elapsedSeconds);
     assert.strictEqual(restored.mistakeCount, original.mistakeCount);
+    assert.strictEqual(restored.hintCount, original.hintCount);
+    assert.ok(restored.hintedCells instanceof Set);
+    assert.ok(restored.hintedCells.has(5));
+    assert.ok(restored.hintedCells.has(42));
 });
 
 test('9. round-trip: pencilMarks are restored as Sets with same contents', () => {
@@ -239,22 +247,30 @@ test('17. defaults currentDifficulty to "easy" if missing', () => {
     assert.strictEqual(restored.currentDifficulty, 'easy');
 });
 
-test('17b. defaults elapsedSeconds and mistakeCount to 0 if missing', () => {
+test('17b. defaults elapsedSeconds, mistakeCount, hintCount, and hintedCells if missing', () => {
     const state = makeSampleState();
     const serialized = serializeState(state);
     delete serialized.elapsedSeconds;
     delete serialized.mistakeCount;
+    delete serialized.hintCount;
+    delete serialized.hintedCells;
     const restored = deserializeState(serialized);
     assert.strictEqual(restored.elapsedSeconds, 0);
     assert.strictEqual(restored.mistakeCount, 0);
+    assert.strictEqual(restored.hintCount, 0);
+    assert.ok(restored.hintedCells instanceof Set);
+    assert.strictEqual(restored.hintedCells.size, 0);
 });
 
-test('17c. handles elapsedSeconds and mistakeCount in JSON round-trip', () => {
+test('17c. handles all new fields in JSON round-trip', () => {
     const state = makeSampleState();
     const json = JSON.stringify(serializeState(state));
     const restored = deserializeState(JSON.parse(json));
     assert.strictEqual(restored.elapsedSeconds, 185);
     assert.strictEqual(restored.mistakeCount, 3);
+    assert.strictEqual(restored.hintCount, 1);
+    assert.ok(restored.hintedCells.has(5));
+    assert.ok(restored.hintedCells.has(42));
 });
 
 test('18. coerces pencilMode to boolean', () => {

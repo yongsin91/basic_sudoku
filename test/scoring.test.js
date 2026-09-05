@@ -68,7 +68,7 @@ test('3. perfect game (0s, 0 mistakes) returns full base', () => {
     assert.strictEqual(result.timePenalty, 0);
     assert.strictEqual(result.mistakePenalty, 0);
     assert.strictEqual(result.final, 1000);
-    assert.strictEqual(result.breakdown, '1000 - 0 - 0 = 1000');
+    assert.strictEqual(result.breakdown, '1000 - 0 - 0 - 0 = 1000');
 });
 
 test('4. perfect game for each difficulty', () => {
@@ -94,7 +94,7 @@ test('7. combined penalties subtract from base', () => {
     assert.strictEqual(result.timePenalty, 300);
     assert.strictEqual(result.mistakePenalty, 60);
     assert.strictEqual(result.final, 640);
-    assert.strictEqual(result.breakdown, '1000 - 300 - 60 = 640');
+    assert.strictEqual(result.breakdown, '1000 - 300 - 60 - 0 = 640');
 });
 
 test('8. time penalty is capped at 50% of base', () => {
@@ -116,8 +116,48 @@ test('10. both penalties capped at 50% each', () => {
     const result = computeScore('easy', 999, 20);
     assert.strictEqual(result.timePenalty, 500);
     assert.strictEqual(result.mistakePenalty, 500);
-    // 1000 - 500 - 500 = 0, but minimum is 10% = 100
+    // 1000 - 500 - 500 - 0 = 0, but minimum is 10% = 100
     assert.strictEqual(result.final, 100);
+});
+
+test('10b. hint penalty is 50 points per hint', () => {
+    const result = computeScore('easy', 0, 0, 2);
+    assert.strictEqual(result.hintPenalty, 100);
+    assert.strictEqual(result.final, 900);
+});
+
+test('10c. hint penalty is capped at 50% of base', () => {
+    // easy base = 1000, cap = 500, 20 hints = 1000 but capped to 500
+    const result = computeScore('easy', 0, 0, 20);
+    assert.strictEqual(result.hintPenalty, 500);
+    assert.strictEqual(result.final, 500);
+});
+
+test('10d. all three penalties combined', () => {
+    // easy base = 1000, 300s, 2 mistakes, 1 hint
+    // 1000 - 300 - 60 - 50 = 590
+    const result = computeScore('easy', 300, 2, 1);
+    assert.strictEqual(result.timePenalty, 300);
+    assert.strictEqual(result.mistakePenalty, 60);
+    assert.strictEqual(result.hintPenalty, 50);
+    assert.strictEqual(result.final, 590);
+    assert.strictEqual(result.breakdown, '1000 - 300 - 60 - 50 = 590');
+});
+
+test('10e. all three penalties capped at 50% each', () => {
+    // easy base = 1000, all caps = 500
+    // 1000 - 500 - 500 - 500 = -500, but min = 100
+    const result = computeScore('easy', 999, 20, 20);
+    assert.strictEqual(result.timePenalty, 500);
+    assert.strictEqual(result.mistakePenalty, 500);
+    assert.strictEqual(result.hintPenalty, 500);
+    assert.strictEqual(result.final, 100);
+});
+
+test('10f. hintCount defaults to 0 when omitted', () => {
+    const result = computeScore('easy', 180, 0);
+    assert.strictEqual(result.hintPenalty, 0);
+    assert.strictEqual(result.final, 820);
 });
 
 test('11. minimum score is 10% of base', () => {
@@ -191,14 +231,14 @@ test('20. exactly at the mistake penalty cap', () => {
 test('20b. breakdown reflects capped penalties', () => {
     // easy base = 1000, 999s capped to 500, 20 mistakes capped to 500
     const result = computeScore('easy', 999, 20);
-    assert.strictEqual(result.breakdown, '1000 - 500 - 500 = 100');
+    assert.strictEqual(result.breakdown, '1000 - 500 - 500 - 0 = 100');
 });
 
 test('20c. breakdown reflects minimum score floor', () => {
     // When base - penalties < min, breakdown shows the min value
     const result = computeScore('medium', 9999, 100);
     assert.strictEqual(result.final, 200);
-    assert.strictEqual(result.breakdown, '2000 - 1000 - 1000 = 200');
+    assert.strictEqual(result.breakdown, '2000 - 1000 - 1000 - 0 = 200');
 });
 
 // ============================================================
