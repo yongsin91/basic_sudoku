@@ -87,8 +87,8 @@ basic_sudoku/
 - **Pen / Pencil toggle** - Press `P` or click the toggle button to switch between placing numbers and toggling candidate notes
 
 ### Visual Aids
-- **Row / column / box highlighting** - Selecting a cell highlights its entire row, column, and 3×3 box
-- **Selected cell indicator** - Active cell gets a distinct background color
+- **Row / column / box highlighting** - Selecting a cell highlights its entire row, column, and 3×3 box with a subtle background tint
+- **Selected cell indicator** - Active cell gets a clearly distinct, brighter background color — noticeably different from the subtle row/column/box highlight, making it easy to identify which cell is selected
 - **Conflict highlighting** - Cells that violate Sudoku rules (duplicate in row/column/box) turn red in real-time
 - **Locked cell styling** - Pre-filled puzzle cells are visually distinct (bold, darker background) and cannot be edited
 
@@ -332,7 +332,7 @@ basic_sudoku/
 | `.cell` | Each grid cell | Flex-centered, 1.4rem font, border, pointer cursor |
 | `.cell.locked` | Pre-filled cells | Bold, darker background, default cursor (not editable) |
 | `.cell.user-input` | User-entered values | Green text color |
-| `.cell.selected` | Active cell | Distinct background highlight |
+| `.cell.selected` | Active cell | Clearly distinct, brighter background — visually separated from the subtle highlight |
 | `.cell.highlight` | Row/col/box peers | Subtle background highlight |
 | `.cell.conflict` | Rule-violating cells | Red text + red-tinted background (overrides other classes) |
 | `.num-btn` | Number pad buttons | Grid of 9 buttons, hover effect |
