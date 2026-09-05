@@ -16,7 +16,7 @@
     --bg-cell-locked: #0f1628;
     --color-cell-locked: #aaa;
     --bg-cell-selected: #3d3a78;
-    --bg-cell-highlight: #1f2745;
+    --bg-cell-highlight: #252d54;
     --color-cell-border: #2a2a4a;
     --bg-conflict: #3a1a2a;
 
@@ -40,7 +40,7 @@
     --bg-cell-locked: #f0f0f0;
     --color-cell-locked: #666;
     --bg-cell-selected: #b3d4f5;
-    --bg-cell-highlight: #f0f7ff;
+    --bg-cell-highlight: #e0ecf8;
     --color-cell-border: #d0d0d0;
     --bg-conflict: #fee2e2;
 }
@@ -57,7 +57,7 @@
     --bg-cell-locked: #162416;
     --color-cell-locked: #9aaa9a;
     --bg-cell-selected: #3a6a3a;
-    --bg-cell-highlight: #1f3a1f;
+    --bg-cell-highlight: #284d28;
     --color-cell-border: #2a4a2a;
     --bg-conflict: #3a1a1a;
 }
@@ -74,7 +74,7 @@
     --bg-cell-locked: #0a1825;
     --color-cell-locked: #9ab0c0;
     --bg-cell-selected: #1e4a6e;
-    --bg-cell-highlight: #122540;
+    --bg-cell-highlight: #1a3850;
     --color-cell-border: #1f3a5a;
     --bg-conflict: #3a1a2a;
 }
