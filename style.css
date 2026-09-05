@@ -4,10 +4,27 @@
     box-sizing: border-box;
 }
 
+/* ---- Theme Variables (default: Midnight) ------------------- */
+:root {
+    --bg-page: #1a1a2e;
+    --color-text: #eee;
+    --color-text-dim: #888;
+    --color-accent: #e94560;
+    --color-secondary: #4ecca3;
+    --color-hint: #5dade2;
+    --bg-board: #16213e;
+    --bg-cell-locked: #0f1628;
+    --color-cell-locked: #aaa;
+    --bg-cell-selected: #2a2a5a;
+    --bg-cell-highlight: #1f2745;
+    --color-cell-border: #2a2a4a;
+    --bg-conflict: #3a1a2a;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #1a1a2e;
-    color: #eee;
+    background: var(--bg-page);
+    color: var(--color-text);
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -25,7 +42,7 @@ body {
 h1 {
     font-size: 2rem;
     letter-spacing: 2px;
-    color: #e94560;
+    color: var(--color-accent);
 }
 
 /* Difficulty buttons */
@@ -34,7 +51,7 @@ h1 {
     gap: 10px;
 }
 
-/* Status bar (timer + mistakes) */
+/* Status bar (timer + mistakes + hints) */
 .status-bar {
     display: flex;
     justify-content: space-between;
@@ -46,38 +63,38 @@ h1 {
 .timer {
     font-size: 1.3rem;
     font-weight: bold;
-    color: #4ecca3;
+    color: var(--color-secondary);
     font-variant-numeric: tabular-nums;
 }
 
 .mistakes {
     font-size: 0.95rem;
-    color: #888;
+    color: var(--color-text-dim);
 }
 
 .hints {
     font-size: 0.95rem;
-    color: #888;
+    color: var(--color-text-dim);
 }
 
 .diff-btn {
     padding: 8px 20px;
     font-size: 1rem;
-    border: 2px solid #e94560;
+    border: 2px solid var(--color-accent);
     background: transparent;
-    color: #eee;
+    color: var(--color-text);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .diff-btn:hover {
-    background: #e94560;
+    background: var(--color-accent);
     color: #fff;
 }
 
 .diff-btn.active {
-    background: #e94560;
+    background: var(--color-accent);
     color: #fff;
 }
 
@@ -88,9 +105,9 @@ h1 {
     grid-template-rows: repeat(9, 1fr);
     width: 450px;
     height: 450px;
-    border: 3px solid #e94560;
+    border: 3px solid var(--color-accent);
     border-radius: 4px;
-    background: #16213e;
+    background: var(--bg-board);
 }
 
 .cell {
@@ -98,7 +115,7 @@ h1 {
     align-items: center;
     justify-content: center;
     font-size: 1.4rem;
-    border: 1px solid #2a2a4a;
+    border: 1px solid var(--color-cell-border);
     cursor: pointer;
     transition: background 0.15s;
     user-select: none;
@@ -106,48 +123,48 @@ h1 {
 
 /* 3x3 box borders — thicker right/bottom border every 3 cells */
 .cell:nth-child(3n) {
-    border-right: 2px solid #e94560;
+    border-right: 2px solid var(--color-accent);
 }
 .cell:nth-child(9n) {
     border-right: none;
 }
 .cell:nth-child(n+19):nth-child(-n+27),
 .cell:nth-child(n+46):nth-child(-n+54) {
-    border-bottom: 2px solid #e94560;
+    border-bottom: 2px solid var(--color-accent);
 }
 
 /* Locked (pre-filled) cells */
 .cell.locked {
-    color: #aaa;
+    color: var(--color-cell-locked);
     font-weight: bold;
-    background: #0f1628;
+    background: var(--bg-cell-locked);
     cursor: default;
 }
 
 /* User-entered cells */
 .cell.user-input {
-    color: #4ecca3;
+    color: var(--color-secondary);
 }
 
 /* Hinted cells */
 .cell.hinted {
-    color: #5dade2;
+    color: var(--color-hint);
 }
 
 /* Selected cell */
 .cell.selected {
-    background: #2a2a5a;
+    background: var(--bg-cell-selected);
 }
 
 /* Highlighted row / col / box */
 .cell.highlight {
-    background: #1f2745;
+    background: var(--bg-cell-highlight);
 }
 
 /* Conflict cells */
 .cell.conflict {
-    color: #e94560 !important;
-    background: #3a1a2a !important;
+    color: var(--color-accent) !important;
+    background: var(--bg-conflict) !important;
 }
 
 /* Pencil marks (candidate notes) */
@@ -165,7 +182,7 @@ h1 {
     align-items: center;
     justify-content: center;
     font-size: 0.55rem;
-    color: #888;
+    color: var(--color-text-dim);
     line-height: 1;
 }
 
@@ -180,17 +197,17 @@ h1 {
 .num-btn {
     padding: 12px 0;
     font-size: 1.2rem;
-    border: 2px solid #2a2a4a;
-    background: #16213e;
-    color: #eee;
+    border: 2px solid var(--color-cell-border);
+    background: var(--bg-board);
+    color: var(--color-text);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s;
 }
 
 .num-btn:hover {
-    border-color: #4ecca3;
-    color: #4ecca3;
+    border-color: var(--color-secondary);
+    color: var(--color-secondary);
 }
 
 /* Action buttons */
@@ -202,50 +219,50 @@ h1 {
 .action-btn {
     padding: 8px 24px;
     font-size: 1rem;
-    border: 2px solid #4ecca3;
+    border: 2px solid var(--color-secondary);
     background: transparent;
-    color: #4ecca3;
+    color: var(--color-secondary);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .action-btn:hover {
-    background: #4ecca3;
-    color: #16213e;
+    background: var(--color-secondary);
+    color: var(--bg-board);
 }
 
 /* Pencil mode toggle button */
 .pencil-btn {
-    border-color: #e94560;
-    color: #e94560;
+    border-color: var(--color-accent);
+    color: var(--color-accent);
 }
 
 .pencil-btn:hover {
-    background: #e94560;
+    background: var(--color-accent);
     color: #fff;
 }
 
 .pencil-btn.active {
-    background: #e94560;
+    background: var(--color-accent);
     color: #fff;
 }
 
 /* Hint button */
 .hint-btn {
-    border-color: #5dade2;
-    color: #5dade2;
+    border-color: var(--color-hint);
+    color: var(--color-hint);
 }
 
 .hint-btn:hover {
-    background: #5dade2;
-    color: #16213e;
+    background: var(--color-hint);
+    color: var(--bg-board);
 }
 
 /* Hint conflict message */
 .hint-message {
     font-size: 0.9rem;
-    color: #e94560;
+    color: var(--color-accent);
     padding: 4px 12px;
     transition: opacity 0.3s;
 }
@@ -256,8 +273,8 @@ h1 {
 
 /* Win banner */
 .win-banner {
-    background: #16213e;
-    border: 2px solid #4ecca3;
+    background: var(--bg-board);
+    border: 2px solid var(--color-secondary);
     border-radius: 10px;
     padding: 24px 40px;
     text-align: center;
@@ -269,7 +286,7 @@ h1 {
 
 .win-banner p {
     font-size: 1.5rem;
-    color: #4ecca3;
+    color: var(--color-secondary);
 }
 
 .win-stats {
@@ -287,22 +304,22 @@ h1 {
 }
 
 .win-stat-label {
-    color: #888;
+    color: var(--color-text-dim);
 }
 
 .win-stat-value {
-    color: #eee;
+    color: var(--color-text);
     font-weight: bold;
     font-variant-numeric: tabular-nums;
 }
 
 .win-score-row .win-stat-value {
-    color: #4ecca3;
+    color: var(--color-secondary);
     font-size: 1.2rem;
 }
 
 .win-best-row .win-stat-value {
-    color: #e94560;
+    color: var(--color-accent);
 }
 
 .win-banner.hidden {
