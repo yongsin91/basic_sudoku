@@ -238,14 +238,14 @@ h1 {
     color: var(--color-hint);
 }
 
-/* Selected cell */
-.cell.selected {
-    background: var(--bg-cell-selected);
-}
-
 /* Highlighted row / col / box */
 .cell.highlight {
     background: var(--bg-cell-highlight);
+}
+
+/* Selected cell (must come after highlight so it wins) */
+.cell.selected {
+    background: var(--bg-cell-selected);
 }
 
 /* Conflict cells */
