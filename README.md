@@ -449,9 +449,3 @@ npm run test:scoring   # 35 scoring tests
 npm run test:all       # all 85 tests
 ```
 All tests use Node's built-in `assert` module — no external dependencies.
-
----
-
-## Future Enhancements (Not Yet Implemented)
-
-- Puzzle import / export
