@@ -148,8 +148,8 @@ basic_sudoku/
 - **`100dvh`** (dynamic viewport height) adapts to mobile browser UI appearing/disappearing
 - **`clamp()` scaling** — Gaps (6–16px), body padding (8–20px), button fonts, and cell fonts all scale with viewport height, shrinking on shorter screens to maximize board space
 - **Proportional cell fonts** — Cell and pencil mark font sizes are `calc(var(--board-size) / N)`, so text stays in proportion as the board grows or shrinks
-- **Board, number pad, status bar, controls, and action buttons** all share the same `--board-size` width — buttons wrap to a second row if needed instead of overflowing the viewport
-- **Width-scaled button padding** — Button horizontal padding uses `2vw` (not `vh`) so it shrinks on narrow screens, preventing buttons from touching viewport edges
+- **Board, number pad, status bar, controls, and action buttons** all share the same `--board-size` width, keeping the layout aligned at any size
+- **Proportional button padding** — Button horizontal padding is `calc(var(--board-size) * N)`, so it shrinks proportionally with the board. On desktop, buttons stay on one row (`flex-wrap: nowrap`); on mobile (≤520px), wrapping is allowed (`flex-wrap: wrap`) to prevent edge-touching
 
 ---
 
